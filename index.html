@@ -756,11 +756,11 @@
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Our Pick</label>
+                    <label>Score</label>
                     <select id="filterDesire">
-                        <option value="">All properties</option>
-                        <option value="hot">Great picks only</option>
-                        <option value="warm">Good and above</option>
+                        <option value="">Any score</option>
+                        <option value="hot">70+ only</option>
+                        <option value="warm">50+ only</option>
                     </select>
                 </div>
                 <button class="btn" onclick="applyFilters()">Search</button>
@@ -793,9 +793,9 @@
                 <div class="stat-sub">Min to max in selection</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Negotiation Opportunities</div>
+                <div class="stat-label">Listed 90+ Days</div>
                 <div class="stat-value" id="statStale">-</div>
-                <div class="stat-sub">Listed 90+ days</div>
+                <div class="stat-sub">Room to negotiate</div>
             </div>
         </div>
 
@@ -992,20 +992,24 @@ function calcBadges(d) {
     const badges = [];
     const area = areaStats[d.area] || {};
 
+    // Under 500k, 3+ bed, good BER, decent size - ideal starter home
     if (d.priceNum <= 500000 && d.bedsNum >= 3 && d.ber && 'ABC'.includes(d.ber[0]) && d.sizeNum >= 80) {
-        badges.push({ type: 'ftb', label: 'FTB Pick' });
+        badges.push({ type: 'ftb', label: 'Starter home' });
     }
 
+    // Just listed and priced below area average
     if (d.daysNum > 0 && d.daysNum <= 14 && area.avgPPS && d.pricePerSqm < area.avgPPS * 0.95) {
-        badges.push({ type: 'fast', label: 'New + Value' });
+        badges.push({ type: 'fast', label: 'Just listed' });
     }
 
-    if (d.daysNum >= 60) {
-        badges.push({ type: 'negotiate', label: '60+ days' });
+    // Been on market a while - room to negotiate
+    if (d.daysNum >= 90) {
+        badges.push({ type: 'negotiate', label: 'Negotiable' });
     }
 
+    // Large property, priced well below area average
     if (d.sizeNum >= 100 && area.avgPPS && d.pricePerSqm < area.avgPPS * 0.85 && area.tier !== 'premium') {
-        badges.push({ type: 'gem', label: 'Underpriced' });
+        badges.push({ type: 'gem', label: 'Below market' });
     }
 
     return badges;
@@ -1051,18 +1055,18 @@ function updateStats() {
     const pps = d.filter(x => x.pricePerSqm > 0).map(x => x.pricePerSqm).sort((a,b) => a-b);
     const days = d.filter(x => x.daysNum > 0).map(x => x.daysNum);
     const hot = d.filter(x => x.desirability.level === 'hot').length;
-    const stale = d.filter(x => x.daysNum >= 90).length;
+    const negotiable = d.filter(x => x.daysNum >= 90).length;
 
     document.getElementById('headerTotal').textContent = d.length.toLocaleString();
     document.getElementById('totalCount').textContent = allData.length.toLocaleString();
     document.getElementById('filteredCount').textContent = d.length.toLocaleString();
     document.getElementById('headerHot').textContent = hot;
-    document.getElementById('statStale').textContent = stale;
+    document.getElementById('statStale').textContent = negotiable;
 
     if (prices.length) {
         const med = prices[Math.floor(prices.length / 2)];
-        document.getElementById('headerMedian').textContent = (med/1000).toFixed(0) + 'k';
-        document.getElementById('statRange').textContent = (prices[0]/1000).toFixed(0) + 'k - ' + (prices[prices.length-1]/1e6).toFixed(1) + 'M';
+        document.getElementById('headerMedian').textContent = formatPrice(med);
+        document.getElementById('statRange').textContent = formatPrice(prices[0]) + ' - ' + formatPrice(prices[prices.length-1]);
     }
     if (pps.length) {
         document.getElementById('statPPS').textContent = pps[Math.floor(pps.length/2)].toLocaleString();
@@ -1097,26 +1101,34 @@ function genInsights() {
         c.appendChild(chip);
     }
 
-    const stale = filteredData.filter(x => x.daysNum >= 90).length;
-    if (stale) {
+    const negotiable = filteredData.filter(x => x.daysNum >= 90).length;
+    if (negotiable) {
         const chip = document.createElement('div');
         chip.className = 'insight-chip warn';
-        chip.textContent = stale + ' on market 90+ days';
+        chip.textContent = negotiable + ' listed 90+ days';
         c.appendChild(chip);
     }
 
-    const ftbCount = filteredData.filter(x => x.badges.some(b => b.type === 'ftb')).length;
-    if (ftbCount) {
+    const starterCount = filteredData.filter(x => x.badges.some(b => b.type === 'ftb')).length;
+    if (starterCount) {
         const chip = document.createElement('div');
         chip.className = 'insight-chip';
-        chip.textContent = ftbCount + ' FTB picks';
+        chip.textContent = starterCount + ' starter homes';
         c.appendChild(chip);
     }
 }
 
+function formatPrice(num) {
+    if (num >= 1000000) return (num / 1000000).toFixed(1).replace('.0', '') + 'M';
+    return Math.round(num / 1000) + 'k';
+}
+
 function showAreaInsights(area) {
     const s = areaStats[area];
-    if (!s) return;
+    if (!s || s.count < 5) {
+        document.getElementById('areaInsights').style.display = 'none';
+        return;
+    }
 
     const panel = document.getElementById('areaInsights');
     const title = document.getElementById('areaInsightTitle');
@@ -1129,10 +1141,9 @@ function showAreaInsights(area) {
     grid.textContent = '';
 
     const stats = [
-        { label: 'Avg Price', value: (s.avgPrice/1000).toFixed(0) + 'k' },
-        { label: 'Price Range', value: (s.minPrice/1000).toFixed(0) + 'k - ' + (s.maxPrice/1000).toFixed(0) + 'k' },
-        { label: 'Avg Days to Sell', value: Math.round(s.avgDays) + ' days' },
-        { label: 'Demand Score', value: Math.round(s.demandScore) + '/100' },
+        { label: 'Avg Price', value: formatPrice(s.avgPrice) },
+        { label: 'Price Range', value: formatPrice(s.minPrice) + ' - ' + formatPrice(s.maxPrice) },
+        { label: 'Avg Days Listed', value: Math.round(s.avgDays) + ' days' },
         { label: 'Properties', value: s.count, tier: s.tier, tierLabel: tierLabels[s.tier] }
     ];
 
@@ -1394,10 +1405,10 @@ function renderTable() {
         priceDiv.className = 'price-cell';
         priceDiv.textContent = d.price;
         td4.appendChild(priceDiv);
-        if (d.ppsPercentile >= 70) {
+        if (d.ppsPercentile >= 75) {
             const percSpan = document.createElement('span');
             percSpan.className = 'percentile good';
-            percSpan.textContent = 'Cheaper than ' + d.ppsPercentile + '%';
+            percSpan.textContent = 'Top ' + (100 - d.ppsPercentile) + '% value';
             td4.appendChild(percSpan);
         }
         tr.appendChild(td4);
