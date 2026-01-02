@@ -1183,6 +1183,7 @@ function initDashboard() {
     genInsights();
     initMap();
     initCharts();
+    updateFilterCounts();
     renderTable();
 }
 
@@ -1492,6 +1493,24 @@ function initCharts() {
     });
 }
 
+function updateFilterCounts() {
+    var counts = {
+        all: filteredData.length,
+        top: filteredData.filter(function(d) { return d.desirability.score >= 70; }).length,
+        starter: filteredData.filter(function(d) { return d.badges.some(function(b) { return b.type === 'ftb'; }); }).length,
+        negotiable: filteredData.filter(function(d) { return d.daysNum >= 90; }).length,
+        new: filteredData.filter(function(d) { return d.daysNum > 0 && d.daysNum <= 14; }).length
+    };
+
+    document.querySelectorAll('.filter-tab').forEach(function(tab) {
+        var filter = tab.dataset.filter;
+        var count = counts[filter] || 0;
+        var label = tab.dataset.label || tab.textContent.split(' ')[0];
+        tab.dataset.label = label;
+        tab.textContent = label + ' (' + count + ')';
+    });
+}
+
 function applyTableFilters() {
     tableData = filteredData.filter(function(d) {
         // Apply table-level filter
@@ -1506,6 +1525,7 @@ function applyTableFilters() {
         return true;
     });
 
+    updateFilterCounts();
     renderTable();
 }
 
