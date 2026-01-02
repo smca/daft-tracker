@@ -126,13 +126,6 @@
             box-shadow: var(--shadow-md);
             transform: translateY(-1px);
         }
-        .insight-chip .icon {
-            font-size: 16px;
-        }
-        .insight-chip strong {
-            color: var(--primary);
-            font-weight: 600;
-        }
         .insight-chip.hot { border-color: var(--secondary); background: var(--secondary-light); }
         .insight-chip.hot strong { color: var(--secondary); }
         .insight-chip.warn { border-color: var(--accent); background: var(--accent-light); }
@@ -1000,19 +993,19 @@ function calcBadges(d) {
     const area = areaStats[d.area] || {};
 
     if (d.priceNum <= 500000 && d.bedsNum >= 3 && d.ber && 'ABC'.includes(d.ber[0]) && d.sizeNum >= 80) {
-        badges.push({ type: 'ftb', label: 'FTB Pick', icon: '\uD83C\uDFAF' });
+        badges.push({ type: 'ftb', label: 'FTB Pick' });
     }
 
     if (d.daysNum > 0 && d.daysNum <= 14 && area.avgPPS && d.pricePerSqm < area.avgPPS * 0.95) {
-        badges.push({ type: 'fast', label: 'Act Fast', icon: '\u26A1' });
+        badges.push({ type: 'fast', label: 'New + Value' });
     }
 
     if (d.daysNum >= 60) {
-        badges.push({ type: 'negotiate', label: 'Negotiate', icon: '\uD83D\uDCAC' });
+        badges.push({ type: 'negotiate', label: '60+ days' });
     }
 
     if (d.sizeNum >= 100 && area.avgPPS && d.pricePerSqm < area.avgPPS * 0.85 && area.tier !== 'premium') {
-        badges.push({ type: 'gem', label: 'Hidden Gem', icon: '\uD83D\uDC8E' });
+        badges.push({ type: 'gem', label: 'Underpriced' });
     }
 
     return badges;
@@ -1092,7 +1085,7 @@ function genInsights() {
     if (topAreas.length) {
         const chip = document.createElement('div');
         chip.className = 'insight-chip hot';
-        chip.innerHTML = '<span class="icon">\uD83D\uDD25</span> Hottest: <strong>' + topAreas.join(', ') + '</strong>';
+        chip.textContent = 'Hottest: ' + topAreas.join(', ');
         c.appendChild(chip);
     }
 
@@ -1100,7 +1093,7 @@ function genInsights() {
     if (newL) {
         const chip = document.createElement('div');
         chip.className = 'insight-chip new';
-        chip.innerHTML = '<span class="icon">\u2728</span> <strong>' + newL + '</strong> new this week';
+        chip.textContent = newL + ' new this week';
         c.appendChild(chip);
     }
 
@@ -1108,7 +1101,7 @@ function genInsights() {
     if (stale) {
         const chip = document.createElement('div');
         chip.className = 'insight-chip warn';
-        chip.innerHTML = '<span class="icon">\uD83D\uDCAC</span> <strong>' + stale + '</strong> negotiation opportunities';
+        chip.textContent = stale + ' on market 90+ days';
         c.appendChild(chip);
     }
 
@@ -1116,7 +1109,7 @@ function genInsights() {
     if (ftbCount) {
         const chip = document.createElement('div');
         chip.className = 'insight-chip';
-        chip.innerHTML = '<span class="icon">\uD83C\uDFAF</span> <strong>' + ftbCount + '</strong> first-time buyer picks';
+        chip.textContent = ftbCount + ' FTB picks';
         c.appendChild(chip);
     }
 }
@@ -1209,7 +1202,7 @@ function updateMapMarkers() {
             });
 
             const badges = d.badges.map(function(b) {
-                return '<span style="background:#f5f5f5;padding:2px 6px;border-radius:4px;font-size:10px;">' + b.icon + ' ' + b.label + '</span>';
+                return '<span style="background:#f5f5f5;padding:2px 6px;border-radius:4px;font-size:10px;">' + b.label + '</span>';
             }).join(' ');
 
             const popupContent = '<div style="font-size:13px;min-width:200px;">' +
@@ -1387,7 +1380,7 @@ function renderTable() {
             d.badges.forEach(function(b) {
                 const badge = document.createElement('span');
                 badge.className = 'badge badge-' + b.type;
-                badge.textContent = b.icon + ' ' + b.label;
+                badge.textContent = b.label;
                 badgeRow.appendChild(badge);
             });
             addrDiv.appendChild(badgeRow);
