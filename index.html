@@ -788,19 +788,19 @@
 
         <div class="stats-grid">
             <div class="stat-card highlight">
-                <div class="stat-label">Median Price per m2</div>
+                <div class="stat-label">Avg Price</div>
+                <div class="stat-value" id="statAvgPrice">-</div>
+                <div class="stat-sub" id="statPriceSub">Across filtered properties</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg per m2</div>
                 <div class="stat-value" id="statPPS">-</div>
-                <div class="stat-sub">Across filtered properties</div>
+                <div class="stat-sub">Price per square metre</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Average Days Listed</div>
+                <div class="stat-label">Avg Days Listed</div>
                 <div class="stat-value" id="statDays">-</div>
-                <div class="stat-sub">Faster selling = higher demand</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Price Range</div>
-                <div class="stat-value" id="statRange">-</div>
-                <div class="stat-sub">Min to max in selection</div>
+                <div class="stat-sub">Lower = higher demand</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Listed 90+ Days</div>
@@ -1091,12 +1091,15 @@ function updateStats() {
     document.getElementById('statStale').textContent = negotiable;
 
     if (prices.length) {
+        const avg = Math.round(prices.reduce((a,b) => a+b, 0) / prices.length);
         const med = prices[Math.floor(prices.length / 2)];
         document.getElementById('headerMedian').textContent = formatPrice(med);
-        document.getElementById('statRange').textContent = formatPrice(prices[0]) + ' - ' + formatPrice(prices[prices.length-1]);
+        document.getElementById('statAvgPrice').textContent = formatPrice(avg);
+        document.getElementById('statPriceSub').textContent = formatPrice(prices[0]) + ' - ' + formatPrice(prices[prices.length-1]);
     }
     if (pps.length) {
-        document.getElementById('statPPS').textContent = pps[Math.floor(pps.length/2)].toLocaleString();
+        const avgPPS = Math.round(pps.reduce((a,b) => a+b, 0) / pps.length);
+        document.getElementById('statPPS').textContent = avgPPS.toLocaleString();
     }
     if (days.length) {
         document.getElementById('statDays').textContent = Math.round(days.reduce((a,b)=>a+b,0)/days.length) + ' days';
@@ -1403,14 +1406,17 @@ function renderTable() {
         td2.appendChild(scoreDiv);
         tr.appendChild(td2);
 
-        // Property address with badges
+        // Property address with badges - address is clickable link
         const td3 = document.createElement('td');
         const addrDiv = document.createElement('div');
         addrDiv.style.maxWidth = '280px';
-        const addrText = document.createElement('div');
-        addrText.style.fontWeight = '500';
-        addrText.textContent = d.address.substring(0, 40) + (d.address.length > 40 ? '...' : '');
-        addrDiv.appendChild(addrText);
+        const addrLink = document.createElement('a');
+        addrLink.href = d.url;
+        addrLink.target = '_blank';
+        addrLink.style.fontWeight = '500';
+        addrLink.style.color = 'var(--text)';
+        addrLink.textContent = d.address.substring(0, 40) + (d.address.length > 40 ? '...' : '');
+        addrDiv.appendChild(addrLink);
 
         if (d.badges.length > 0) {
             const badgeRow = document.createElement('div');
@@ -1477,12 +1483,13 @@ function renderTable() {
         td9.textContent = d.daysNum || '-';
         tr.appendChild(td9);
 
-        // Link
+        // Link - styled as button
         const td10 = document.createElement('td');
         const link = document.createElement('a');
         link.href = d.url;
         link.target = '_blank';
-        link.textContent = 'View';
+        link.textContent = 'Daft';
+        link.style.cssText = 'display:inline-block;padding:4px 10px;background:var(--primary);color:white;border-radius:4px;font-size:11px;font-weight:500;text-decoration:none;';
         td10.appendChild(link);
         tr.appendChild(td10);
 
