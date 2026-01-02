@@ -1304,9 +1304,24 @@ function initCharts() {
         }
     });
 
-    const areaData = Object.entries(areaStats)
+    // Calculate area stats from filtered data
+    const filteredAreaStats = {};
+    filteredData.forEach(function(d) {
+        if (!filteredAreaStats[d.area]) filteredAreaStats[d.area] = { days: [], count: 0 };
+        filteredAreaStats[d.area].count++;
+        if (d.daysNum > 0) filteredAreaStats[d.area].days.push(d.daysNum);
+    });
+
+    const filteredDays = filteredData.filter(function(d) { return d.daysNum > 0; }).map(function(d) { return d.daysNum; });
+    const filteredMedianDays = filteredDays.length ? filteredDays.sort(function(a,b) { return a-b; })[Math.floor(filteredDays.length / 2)] : 60;
+
+    const areaData = Object.entries(filteredAreaStats)
         .filter(function(e) { return e[1].days.length >= 3; })
-        .map(function(e) { return { area: e[0].length > 14 ? e[0].substring(0, 14) + '...' : e[0], demand: Math.round(e[1].demandScore) }; })
+        .map(function(e) {
+            var avgDays = e[1].days.reduce(function(a,b) { return a+b; }, 0) / e[1].days.length;
+            var demand = Math.max(0, Math.min(100, 100 - (avgDays / filteredMedianDays * 50)));
+            return { area: e[0].length > 14 ? e[0].substring(0, 14) + '...' : e[0], demand: Math.round(demand) };
+        })
         .sort(function(a, b) { return b.demand - a.demand; })
         .slice(0, 8);
 
