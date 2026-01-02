@@ -628,8 +628,16 @@
             white-space: nowrap;
             border-bottom: 2px solid var(--border);
         }
-        th:hover { color: var(--text); }
+        th[data-sort]:hover { color: var(--text); background: var(--bg); }
+        th[data-sort]::after {
+            content: '↕';
+            margin-left: 4px;
+            opacity: 0.3;
+            font-size: 9px;
+        }
         th.sorted { color: var(--primary); }
+        th.sorted.asc::after { content: '↑'; opacity: 1; }
+        th.sorted.desc::after { content: '↓'; opacity: 1; }
         tbody tr { transition: background 0.1s; }
         tbody tr:hover { background: rgba(0,0,0,0.02); }
 
@@ -1095,14 +1103,14 @@
                     <thead>
                         <tr>
                             <th style="width:40px;"></th>
-                            <th onclick="sortTable('desirability.score')">Score</th>
-                            <th onclick="sortTable('address')">Property</th>
-                            <th onclick="sortTable('priceNum')">Price</th>
-                            <th onclick="sortTable('pricePerSqm')">Per m2</th>
-                            <th onclick="sortTable('bedsNum')">Beds</th>
-                            <th onclick="sortTable('sizeNum')">Size</th>
-                            <th onclick="sortTable('ber')">BER</th>
-                            <th onclick="sortTable('daysNum')">Days</th>
+                            <th data-sort="desirability.score" onclick="sortTable('desirability.score')">Score</th>
+                            <th data-sort="address" onclick="sortTable('address')">Property</th>
+                            <th data-sort="priceNum" onclick="sortTable('priceNum')">Price</th>
+                            <th data-sort="pricePerSqm" onclick="sortTable('pricePerSqm')">Per m2</th>
+                            <th data-sort="bedsNum" onclick="sortTable('bedsNum')">Beds</th>
+                            <th data-sort="sizeNum" onclick="sortTable('sizeNum')">Size</th>
+                            <th data-sort="ber" onclick="sortTable('ber')">BER</th>
+                            <th data-sort="daysNum" onclick="sortTable('daysNum')">Days</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -1412,6 +1420,7 @@ function initDashboard() {
     initMap();
     initCharts();
     updateFilterCounts();
+    updateSortIndicators();
     renderTable();
 }
 
@@ -2145,7 +2154,18 @@ function sortTable(key) {
     } else {
         currentSort = { key: key, dir: -1 };
     }
+    updateSortIndicators();
     renderTable();
+}
+
+function updateSortIndicators() {
+    document.querySelectorAll('th[data-sort]').forEach(function(th) {
+        th.classList.remove('sorted', 'asc', 'desc');
+        if (th.dataset.sort === currentSort.key) {
+            th.classList.add('sorted');
+            th.classList.add(currentSort.dir === -1 ? 'desc' : 'asc');
+        }
+    });
 }
 
 var filterTimeout;
