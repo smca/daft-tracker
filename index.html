@@ -151,14 +151,15 @@
         }
         .filter-toggle-icon {
             display: none;
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             border-radius: 4px;
             background: var(--bg);
-            font-size: 14px;
-            line-height: 20px;
+            font-size: 16px;
+            line-height: 22px;
             text-align: center;
             color: var(--text-muted);
+            margin-left: 4px;
         }
         .filter-count {
             font-size: 13px;
@@ -328,15 +329,16 @@
             gap: 8px;
         }
         .section-toggle {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             border-radius: 4px;
             background: var(--bg);
-            font-size: 14px;
-            line-height: 20px;
+            font-size: 16px;
+            line-height: 22px;
             text-align: center;
             color: var(--text-muted);
             transition: transform 0.2s;
+            margin-left: 6px;
         }
         .charts-section.open .section-toggle { transform: rotate(45deg); }
         .charts-grid {
@@ -1131,6 +1133,49 @@ let currentSort = { key: 'desirability.score', dir: -1 };
 let currentTableFilter = 'all';
 let tableSearchTerm = '';
 
+// Save filters to localStorage
+function saveFilters() {
+    var filters = {
+        area: document.getElementById('filterArea').value,
+        location: document.getElementById('filterLocation').value,
+        price: document.getElementById('filterPrice').value,
+        beds: document.getElementById('filterBeds').value,
+        type: document.getElementById('filterType').value,
+        ber: document.getElementById('filterBer').value,
+        score: document.getElementById('filterDesire').value,
+        tableFilter: currentTableFilter,
+        tableSearch: tableSearchTerm
+    };
+    localStorage.setItem('dublinHomeFilters', JSON.stringify(filters));
+}
+
+// Load filters from localStorage
+function loadFilters() {
+    try {
+        var saved = localStorage.getItem('dublinHomeFilters');
+        if (saved) {
+            var filters = JSON.parse(saved);
+            if (filters.area) document.getElementById('filterArea').value = filters.area;
+            if (filters.location) document.getElementById('filterLocation').value = filters.location;
+            if (filters.price) document.getElementById('filterPrice').value = filters.price;
+            if (filters.beds) document.getElementById('filterBeds').value = filters.beds;
+            if (filters.type) document.getElementById('filterType').value = filters.type;
+            if (filters.ber) document.getElementById('filterBer').value = filters.ber;
+            if (filters.score) document.getElementById('filterDesire').value = filters.score;
+            if (filters.tableFilter) {
+                currentTableFilter = filters.tableFilter;
+                document.querySelectorAll('.filter-tab').forEach(function(t) {
+                    t.classList.toggle('active', t.dataset.filter === currentTableFilter);
+                });
+            }
+            if (filters.tableSearch) {
+                tableSearchTerm = filters.tableSearch;
+                document.getElementById('tableSearch').value = filters.tableSearch;
+            }
+        }
+    } catch (e) {}
+}
+
 const BER_COSTS = { A: 800, B: 1200, C: 1600, D: 2000, E: 2500, F: 3000, G: 3500 };
 const AVG_HEATING = 2000;
 
@@ -1213,6 +1258,8 @@ async function loadData() {
     });
 
     filteredData = [...allData];
+    loadFilters();
+    applyFilters();
     initDashboard();
 }
 
@@ -1989,6 +2036,7 @@ function applyFilters() {
     updateMapMarkers();
     initCharts();
     applyTableFilters();
+    saveFilters();
 }
 
 function resetFilters() {
@@ -1996,8 +2044,15 @@ function resetFilters() {
     for (var i = 0; i < selects.length; i++) selects[i].value = '';
     document.getElementById('filterLocation').value = '';
     document.getElementById('filterArea').value = '';
+    document.getElementById('tableSearch').value = '';
     document.getElementById('areaInsights').style.display = 'none';
+    tableSearchTerm = '';
+    currentTableFilter = 'all';
+    document.querySelectorAll('.filter-tab').forEach(function(t) {
+        t.classList.toggle('active', t.dataset.filter === 'all');
+    });
     filteredData = allData.slice();
+    localStorage.removeItem('dublinHomeFilters');
     applyFilters();
 }
 
@@ -2050,6 +2105,7 @@ document.querySelectorAll('.filter-tab').forEach(function(tab) {
         tab.classList.add('active');
         currentTableFilter = tab.dataset.filter;
         applyTableFilters();
+        saveFilters();
     });
 });
 
@@ -2058,7 +2114,10 @@ var tableSearchTimeout;
 document.getElementById('tableSearch').addEventListener('input', function(e) {
     clearTimeout(tableSearchTimeout);
     tableSearchTerm = e.target.value.toLowerCase();
-    tableSearchTimeout = setTimeout(applyTableFilters, 200);
+    tableSearchTimeout = setTimeout(function() {
+        applyTableFilters();
+        saveFilters();
+    }, 200);
 });
 
 loadData();
