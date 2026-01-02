@@ -525,6 +525,9 @@
         tr.row-warm { background: linear-gradient(90deg, rgba(245,158,11,0.06) 0%, transparent 50%); }
         tr.row-warm:hover { background: linear-gradient(90deg, rgba(245,158,11,0.12) 0%, var(--bg) 50%); }
 
+        /* Preferred area indicator */
+        tr.preferred-area td:first-child { border-left: 3px solid var(--primary); }
+
         /* Score Breakdown Tooltip */
         .score-tooltip {
             position: fixed;
@@ -711,9 +714,16 @@
                 </div>
             </div>
             <div class="filters-row">
+                <div class="filter-group">
+                    <label>Area</label>
+                    <select id="filterArea">
+                        <option value="">All Dublin</option>
+                        <option value="preferred">South Dublin coast</option>
+                    </select>
+                </div>
                 <div class="filter-group wide">
-                    <label>Location</label>
-                    <input type="text" id="filterLocation" placeholder="Search by area...">
+                    <label>Search</label>
+                    <input type="text" id="filterLocation" placeholder="Filter by name...">
                 </div>
                 <div class="filter-group">
                     <label>Max Price</label>
@@ -889,6 +899,22 @@ let currentSort = { key: 'desirability.score', dir: -1 };
 const BER_COSTS = { A: 800, B: 1200, C: 1600, D: 2000, E: 2500, F: 3000, G: 3500 };
 const AVG_HEATING = 2000;
 
+// Preferred areas (South Dublin / North Wicklow coast)
+const PREFERRED_AREAS = [
+    'dun laoghaire', 'dunlaoghaire', 'dún laoghaire',
+    'greystones', 'bray', 'blackrock', 'shankill',
+    'sallynoggin', 'dalkey', 'killiney', 'glasthule',
+    'monkstown', 'sandycove', 'glenageary', 'cabinteely',
+    'foxrock', 'cornelscourt', 'loughlinstown', 'ballybrack',
+    'kilmacud', 'stillorgan', 'mount merrion', 'booterstown',
+    'rathmichael', 'carrickmines'
+];
+
+function isPreferredArea(address) {
+    const lower = address.toLowerCase();
+    return PREFERRED_AREAS.some(area => lower.includes(area));
+}
+
 async function loadData() {
     const response = await fetch('dublin_houses.csv');
     const text = await response.text();
@@ -909,6 +935,7 @@ async function loadData() {
         obj.area = extractArea(obj.address);
         obj.heatingCost = obj.ber ? (BER_COSTS[obj.ber[0]] || 2200) : 2200;
         obj.heatingSaving = AVG_HEATING - obj.heatingCost;
+        obj.inPreferredArea = isPreferredArea(obj.address);
         return obj;
     }).filter(d => d.priceNum > 0);
 
@@ -1350,7 +1377,7 @@ function renderTable() {
 
     sorted.slice(0, 500).forEach(function(d, idx) {
         const tr = document.createElement('tr');
-        tr.className = 'row-' + d.desirability.level;
+        tr.className = 'row-' + d.desirability.level + (d.inPreferredArea ? ' preferred-area' : '');
         const des = d.desirability;
         const daysClass = d.daysNum >= 90 ? 'days-old' : d.daysNum <= 7 && d.daysNum > 0 ? 'days-new' : '';
         const berClass = d.ber ? (d.ber[0] <= 'B' ? 'ber-good' : d.ber[0] <= 'C' ? 'ber-ok' : 'ber-bad') : '';
@@ -1613,6 +1640,7 @@ function clearCompare() {
 
 function applyFilters() {
     const loc = document.getElementById('filterLocation').value.toLowerCase();
+    const areaFilter = document.getElementById('filterArea').value;
 
     filteredData = allData.filter(function(d) {
         const maxP = document.getElementById('filterPrice').value;
@@ -1621,6 +1649,7 @@ function applyFilters() {
         const ber = document.getElementById('filterBer').value;
         const des = document.getElementById('filterDesire').value;
 
+        if (areaFilter === 'preferred' && !isPreferredArea(d.address)) return false;
         if (loc && !d.address.toLowerCase().includes(loc) && !d.area.toLowerCase().includes(loc)) return false;
         if (maxP && d.priceNum > parseInt(maxP)) return false;
         if (minB && d.bedsNum < parseInt(minB)) return false;
@@ -1652,6 +1681,7 @@ function resetFilters() {
     var selects = document.querySelectorAll('.filters-card select');
     for (var i = 0; i < selects.length; i++) selects[i].value = '';
     document.getElementById('filterLocation').value = '';
+    document.getElementById('filterArea').value = '';
     document.getElementById('areaInsights').style.display = 'none';
     filteredData = allData.slice();
     applyFilters();
