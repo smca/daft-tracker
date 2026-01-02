@@ -509,17 +509,28 @@
             gap: 8px;
         }
         .score-badge {
-            font-weight: 600;
-            padding: 4px 10px;
+            font-weight: 700;
+            padding: 6px 12px;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 13px;
             cursor: pointer;
             transition: all 0.15s;
+            min-width: 42px;
+            text-align: center;
+            display: inline-block;
         }
         .score-badge:hover { transform: scale(1.05); }
-        .score-hot { background: var(--secondary); color: white; }
-        .score-warm { background: var(--accent); color: white; }
-        .score-cool { background: var(--border); color: var(--text-muted); }
+        .score-badge.score-hot { box-shadow: 0 2px 8px rgba(34,197,94,0.4); }
+        .score-badge.score-warm { box-shadow: 0 2px 6px rgba(245,158,11,0.3); }
+        .score-hot { background: #22C55E; color: white; }
+        .score-warm { background: #F59E0B; color: white; }
+        .score-cool { background: #94A3B8; color: white; }
+
+        /* Row highlighting for quick scanning */
+        tr.row-hot { background: linear-gradient(90deg, rgba(34,197,94,0.08) 0%, transparent 50%); }
+        tr.row-hot:hover { background: linear-gradient(90deg, rgba(34,197,94,0.15) 0%, var(--bg) 50%); }
+        tr.row-warm { background: linear-gradient(90deg, rgba(245,158,11,0.06) 0%, transparent 50%); }
+        tr.row-warm:hover { background: linear-gradient(90deg, rgba(245,158,11,0.12) 0%, var(--bg) 50%); }
 
         /* Score Breakdown Tooltip */
         .score-tooltip {
@@ -1335,6 +1346,7 @@ function renderTable() {
 
     sorted.slice(0, 500).forEach(function(d, idx) {
         const tr = document.createElement('tr');
+        tr.className = 'row-' + d.desirability.level;
         const des = d.desirability;
         const daysClass = d.daysNum >= 90 ? 'days-old' : d.daysNum <= 7 && d.daysNum > 0 ? 'days-new' : '';
         const berClass = d.ber ? (d.ber[0] <= 'B' ? 'ber-good' : d.ber[0] <= 'C' ? 'ber-ok' : 'ber-bad') : '';
