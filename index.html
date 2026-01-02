@@ -3,257 +3,730 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dublin Housing Tracker</title>
+    <title>Dublin Home Finder</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     <style>
         :root {
-            --bg: #0a0a0a;
-            --surface: #141414;
-            --border: #2a2a2a;
-            --text: #e0e0e0;
-            --text-dim: #808080;
-            --accent: #00ff88;
-            --accent-dim: #00aa55;
-            --warn: #ffaa00;
-            --danger: #ff4444;
-            --blue: #4488ff;
+            --bg: #FAF8F5;
+            --bg-warm: #F5F2ED;
+            --surface: #FFFFFF;
+            --border: #E8E4DE;
+            --border-light: #F0ECE6;
+            --text: #2C2825;
+            --text-muted: #7A7067;
+            --text-light: #A8A097;
+            --primary: #C05746;
+            --primary-light: #E8D5D1;
+            --secondary: #6B9080;
+            --secondary-light: #D4E4DE;
+            --accent: #E0A458;
+            --accent-light: #F5E6D3;
+            --danger: #C44536;
+            --shadow-sm: 0 1px 3px rgba(44,40,37,0.06);
+            --shadow-md: 0 4px 12px rgba(44,40,37,0.08);
+            --shadow-lg: 0 8px 24px rgba(44,40,37,0.1);
+            --radius: 12px;
+            --radius-sm: 8px;
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: 'Outfit', sans-serif;
             background: var(--bg);
             color: var(--text);
-            font-size: 12px;
-            line-height: 1.4;
+            font-size: 14px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
         }
+
+        /* Header */
         .header {
+            background: var(--surface);
             border-bottom: 1px solid var(--border);
-            padding: 12px 16px;
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow-sm);
+        }
+        .header-inner {
+            max-width: 1600px;
+            margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 16px;
         }
         .header h1 {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--accent);
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            font-family: 'Newsreader', serif;
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header h1::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
         }
         .header-stats {
             display: flex;
             gap: 24px;
-            font-size: 11px;
+            font-size: 13px;
         }
-        .header-stat { color: var(--text-dim); }
-        .header-stat strong { color: var(--text); margin-left: 4px; }
-        .container { padding: 12px; max-width: 1800px; margin: 0 auto; }
+        .header-stat {
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .header-stat strong {
+            color: var(--text);
+            font-weight: 600;
+        }
 
-        /* Stats row */
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        .container {
+            padding: 24px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Quick Insights Bar */
+        .insights-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .insight-chip {
+            display: flex;
+            align-items: center;
             gap: 8px;
-            margin-bottom: 12px;
-        }
-        .stat {
+            padding: 10px 16px;
             background: var(--surface);
             border: 1px solid var(--border);
-            padding: 10px 12px;
+            border-radius: 100px;
+            font-size: 13px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
         }
-        .stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-value { font-size: 18px; font-weight: 700; color: var(--accent); margin-top: 2px; }
-        .stat-sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+        .insight-chip:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+        .insight-chip .icon {
+            font-size: 16px;
+        }
+        .insight-chip strong {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .insight-chip.hot { border-color: var(--secondary); background: var(--secondary-light); }
+        .insight-chip.hot strong { color: var(--secondary); }
+        .insight-chip.warn { border-color: var(--accent); background: var(--accent-light); }
+        .insight-chip.warn strong { color: #B8863F; }
+        .insight-chip.new { border-color: var(--primary); background: var(--primary-light); }
+        .insight-chip.new strong { color: var(--primary); }
 
-        /* Filters */
-        .filters {
+        /* Filters Card */
+        .filters-card {
             background: var(--surface);
             border: 1px solid var(--border);
-            padding: 12px;
-            margin-bottom: 12px;
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-sm);
         }
+        .filters-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .filters-header h2 {
+            font-family: 'Newsreader', serif;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        .filter-count {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        .filter-count strong { color: var(--primary); font-weight: 600; }
+
         .filters-row {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 12px;
             align-items: flex-end;
         }
-        .filter-group { display: flex; flex-direction: column; gap: 4px; }
-        .filter-group label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 140px;
+        }
+        .filter-group.wide { min-width: 180px; flex: 1; }
+        .filter-group label {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
         .filter-group input, .filter-group select {
             background: var(--bg);
             border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
             color: var(--text);
-            padding: 6px 8px;
+            padding: 10px 12px;
             font-family: inherit;
-            font-size: 11px;
-            min-width: 120px;
+            font-size: 14px;
+            transition: all 0.15s;
         }
         .filter-group input:focus, .filter-group select:focus {
             outline: none;
-            border-color: var(--accent);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
         }
+        .filter-group input::placeholder { color: var(--text-light); }
+
         .btn {
-            background: var(--accent);
-            color: var(--bg);
+            background: var(--primary);
+            color: white;
             border: none;
-            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            padding: 10px 20px;
             font-family: inherit;
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
-            text-transform: uppercase;
+            transition: all 0.15s;
         }
-        .btn:hover { background: var(--accent-dim); }
+        .btn:hover {
+            background: #A84A3C;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
         .btn-ghost {
             background: transparent;
             border: 1px solid var(--border);
-            color: var(--text-dim);
+            color: var(--text-muted);
         }
-        .btn-ghost:hover { border-color: var(--text); color: var(--text); }
-        .filter-count {
-            font-size: 11px;
-            color: var(--text-dim);
-            margin-left: auto;
+        .btn-ghost:hover {
+            border-color: var(--text-muted);
+            color: var(--text);
+            background: transparent;
+            transform: none;
+            box-shadow: none;
         }
-        .filter-count strong { color: var(--accent); }
 
-        /* Grid */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
+        }
+        .stat-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .stat-value {
+            font-family: 'Newsreader', serif;
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .stat-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        .stat-card.highlight { border-left: 3px solid var(--primary); }
+        .stat-card.highlight .stat-value { color: var(--primary); }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 1000px) { .main-grid { grid-template-columns: 1fr; } }
 
         .card {
             background: var(--surface);
             border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
         }
         .card-header {
-            padding: 8px 12px;
-            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-light);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .card-header h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        .card-body { padding: 12px; }
-        .card-badge { font-size: 10px; color: var(--text-dim); }
+        .card-header h3 {
+            font-family: 'Newsreader', serif;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .card-badge {
+            font-size: 11px;
+            color: var(--text-light);
+            background: var(--bg);
+            padding: 4px 10px;
+            border-radius: 100px;
+        }
+        .card-body { padding: 16px 20px; }
 
-        #map { height: 300px; }
-        .chart-container { height: 220px; }
+        #map { height: 320px; border-radius: 8px; overflow: hidden; }
+        .chart-container { height: 260px; }
+
+        /* Area Insights Panel */
+        .area-insights {
+            background: var(--bg-warm);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .area-insights-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        .area-insights-header h4 {
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .area-insights-toggle {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .area-insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        .area-stat {
+            background: var(--surface);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+        }
+        .area-stat-label { font-size: 11px; color: var(--text-muted); }
+        .area-stat-value { font-weight: 600; color: var(--text); margin-top: 2px; }
+        .area-tag {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-top: 4px;
+        }
+        .area-tag.affordable { background: var(--secondary-light); color: var(--secondary); }
+        .area-tag.midrange { background: var(--accent-light); color: #9A7340; }
+        .area-tag.premium { background: var(--primary-light); color: var(--primary); }
+
+        /* Compare Panel */
+        .compare-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 16px 24px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        .compare-panel.active { transform: translateY(0); }
+        .compare-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .compare-header h3 { font-family: 'Newsreader', serif; font-size: 18px; }
+        .compare-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        .compare-slot {
+            background: var(--bg);
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .compare-slot.filled {
+            border-style: solid;
+            border-color: var(--primary);
+        }
+        .compare-slot-empty {
+            color: var(--text-light);
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        .compare-property {
+            font-size: 13px;
+        }
+        .compare-property-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            padding-right: 24px;
+        }
+        .compare-property-detail {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .compare-property-detail:last-child { border: none; }
+        .compare-remove {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: none;
+            background: var(--text-muted);
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
 
         /* Table */
-        .table-card { background: var(--surface); border: 1px solid var(--border); }
-        .table-scroll { max-height: 500px; overflow: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        .table-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+        .table-scroll {
+            max-height: 600px;
+            overflow: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-light);
+        }
         th {
             background: var(--bg);
             font-weight: 600;
+            font-size: 11px;
             text-transform: uppercase;
-            font-size: 10px;
             letter-spacing: 0.5px;
-            color: var(--text-dim);
+            color: var(--text-muted);
             position: sticky;
             top: 0;
             cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
         }
-        th:hover { color: var(--text); }
-        tr:hover { background: rgba(0,255,136,0.03); }
+        th:hover { color: var(--text); background: var(--bg-warm); }
+        th.sorted { color: var(--primary); }
+        tr:hover { background: var(--bg); }
 
-        /* Score badges */
-        .score { font-weight: 600; padding: 2px 6px; font-size: 10px; }
-        .score-hot { background: var(--accent); color: var(--bg); }
-        .score-warm { background: var(--warn); color: var(--bg); }
-        .score-cool { background: var(--border); color: var(--text-dim); }
+        /* Badges */
+        .badge-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        .badge-ftb { background: #E8F4EC; color: #2E7D4A; }
+        .badge-fast { background: #FCE8E6; color: #C53929; }
+        .badge-negotiate { background: #FEF3E2; color: #B8863F; }
+        .badge-gem { background: #E8EEF8; color: #4A6FA5; }
 
-        .price { color: var(--accent); font-weight: 600; }
-        .days-old { color: var(--danger); }
-        .days-new { color: var(--accent); }
-        .ber-good { color: var(--accent); }
-        .ber-ok { color: var(--warn); }
-        .ber-bad { color: var(--danger); }
+        /* Score */
+        .score-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .score-badge {
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .score-badge:hover { transform: scale(1.05); }
+        .score-hot { background: var(--secondary); color: white; }
+        .score-warm { background: var(--accent); color: white; }
+        .score-cool { background: var(--border); color: var(--text-muted); }
 
-        a { color: var(--blue); text-decoration: none; }
-        a:hover { text-decoration: underline; }
-
-        /* Insights */
-        .insights { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-        .insight {
+        /* Score Breakdown Tooltip */
+        .score-tooltip {
+            position: fixed;
             background: var(--surface);
             border: 1px solid var(--border);
-            border-left: 3px solid var(--accent);
-            padding: 8px 12px;
-            font-size: 11px;
-            flex: 1;
-            min-width: 200px;
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            box-shadow: var(--shadow-lg);
+            z-index: 1001;
+            width: 280px;
+            display: none;
         }
-        .insight.warn { border-left-color: var(--warn); }
-        .insight strong { color: var(--accent); }
-        .insight.warn strong { color: var(--warn); }
+        .score-tooltip.active { display: block; }
+        .score-tooltip h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .score-factor {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 13px;
+        }
+        .score-factor:last-child { border: none; }
+        .score-factor-label { color: var(--text-muted); }
+        .score-factor-value { font-weight: 600; }
+        .score-factor-bar {
+            width: 60px;
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .score-factor-fill {
+            height: 100%;
+            background: var(--secondary);
+            border-radius: 3px;
+        }
+
+        /* Running Cost */
+        .running-cost {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .running-cost.good { color: var(--secondary); }
+        .running-cost.bad { color: var(--danger); }
+
+        /* Percentile */
+        .percentile {
+            font-size: 11px;
+            color: var(--text-light);
+        }
+        .percentile.good { color: var(--secondary); }
+
+        /* Property Price */
+        .price-cell {
+            font-weight: 600;
+            color: var(--text);
+        }
+        .price-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* Compare checkbox */
+        .compare-check {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .compare-check:hover { border-color: var(--primary); }
+        .compare-check.checked {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        .compare-check.checked::after {
+            content: '\2713';
+            color: white;
+            font-size: 12px;
+        }
+
+        /* Days styling */
+        .days-new { color: var(--secondary); font-weight: 500; }
+        .days-old { color: var(--danger); }
+
+        /* BER styling */
+        .ber-good { color: var(--secondary); font-weight: 500; }
+        .ber-ok { color: var(--accent); }
+        .ber-bad { color: var(--danger); }
+
+        /* Links */
+        a { color: var(--primary); text-decoration: none; }
+        a:hover { text-decoration: underline; }
 
         /* Mobile */
-        @media (max-width: 600px) {
-            .header { flex-direction: column; align-items: flex-start; }
-            .header-stats { flex-wrap: wrap; gap: 12px; }
+        @media (max-width: 768px) {
+            .header { padding: 12px 16px; }
+            .header h1 { font-size: 20px; }
+            .header-stats { gap: 16px; flex-wrap: wrap; }
+            .container { padding: 16px; }
             .filters-row { flex-direction: column; }
-            .filter-group { width: 100%; }
-            .filter-group input, .filter-group select { width: 100%; }
-            .stats-row { grid-template-columns: 1fr 1fr; }
-            table { font-size: 10px; }
-            th, td { padding: 4px 6px; }
+            .filter-group { width: 100%; min-width: auto; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .compare-grid { grid-template-columns: 1fr; }
+            table { font-size: 12px; }
+            th, td { padding: 8px 12px; }
+            .badge-row { display: none; }
         }
 
         /* Leaflet overrides */
-        .leaflet-container { background: var(--bg); }
-        .leaflet-popup-content-wrapper { background: var(--surface); color: var(--text); border-radius: 0; }
+        .leaflet-popup-content-wrapper {
+            background: var(--surface);
+            color: var(--text);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-lg);
+        }
+        .leaflet-popup-content { margin: 12px 16px; font-family: 'Outfit', sans-serif; }
         .leaflet-popup-tip { background: var(--surface); }
+
+        /* Loading state */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: var(--text-muted);
+        }
+
+        /* Fade in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.4s ease forwards;
+        }
     </style>
 </head>
 <body>
     <header class="header">
-        <h1>Dublin Housing Tracker</h1>
-        <div class="header-stats">
-            <div class="header-stat">Properties:<strong id="headerTotal">-</strong></div>
-            <div class="header-stat">Median:<strong id="headerMedian">-</strong></div>
-            <div class="header-stat">Hot Picks:<strong id="headerHot">-</strong></div>
-            <div class="header-stat">Stale (90d+):<strong id="headerStale">-</strong></div>
+        <div class="header-inner">
+            <h1>Dublin Home Finder</h1>
+            <div class="header-stats">
+                <div class="header-stat">
+                    <span>Properties</span>
+                    <strong id="headerTotal">-</strong>
+                </div>
+                <div class="header-stat">
+                    <span>Median</span>
+                    <strong id="headerMedian">-</strong>
+                </div>
+                <div class="header-stat">
+                    <span>Great picks</span>
+                    <strong id="headerHot">-</strong>
+                </div>
+            </div>
         </div>
     </header>
 
     <div class="container">
-        <div class="insights" id="insights"></div>
+        <div class="insights-bar" id="insightsBar"></div>
 
-        <div class="filters">
+        <div class="filters-card">
+            <div class="filters-header">
+                <h2>Find your home</h2>
+                <div class="filter-count">
+                    Showing <strong id="filteredCount">0</strong> of <span id="totalCount">0</span>
+                </div>
+            </div>
             <div class="filters-row">
-                <div class="filter-group">
+                <div class="filter-group wide">
                     <label>Location</label>
-                    <input type="text" id="filterLocation" placeholder="area name...">
+                    <input type="text" id="filterLocation" placeholder="Search by area...">
                 </div>
                 <div class="filter-group">
                     <label>Max Price</label>
                     <select id="filterPrice">
-                        <option value="">any</option>
-                        <option value="300000">€300k</option>
-                        <option value="400000">€400k</option>
-                        <option value="500000">€500k</option>
-                        <option value="600000">€600k</option>
-                        <option value="700000">€700k</option>
-                        <option value="800000">€800k</option>
-                        <option value="1000000">€1M</option>
+                        <option value="">Any price</option>
+                        <option value="300000">Under 300k</option>
+                        <option value="400000">Under 400k</option>
+                        <option value="500000">Under 500k</option>
+                        <option value="600000">Under 600k</option>
+                        <option value="700000">Under 700k</option>
+                        <option value="1000000">Under 1M</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Beds</label>
+                    <label>Bedrooms</label>
                     <select id="filterBeds">
-                        <option value="">any</option>
+                        <option value="">Any</option>
                         <option value="2">2+</option>
                         <option value="3">3+</option>
                         <option value="4">4+</option>
@@ -262,90 +735,125 @@
                 <div class="filter-group">
                     <label>Type</label>
                     <select id="filterType">
-                        <option value="">any</option>
-                        <option value="Detached">detached</option>
-                        <option value="Semi">semi-d</option>
-                        <option value="Terrace">terrace</option>
+                        <option value="">Any type</option>
+                        <option value="Detached">Detached</option>
+                        <option value="Semi">Semi-detached</option>
+                        <option value="Terrace">Terrace</option>
+                        <option value="Bungalow">Bungalow</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>BER</label>
+                    <label>Energy Rating</label>
                     <select id="filterBer">
-                        <option value="">any</option>
-                        <option value="A">A</option>
-                        <option value="B">B+</option>
-                        <option value="C">C+</option>
+                        <option value="">Any BER</option>
+                        <option value="A">A rated</option>
+                        <option value="B">B or better</option>
+                        <option value="C">C or better</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Score</label>
+                    <label>Our Pick</label>
                     <select id="filterDesire">
-                        <option value="">any</option>
-                        <option value="hot">hot only</option>
-                        <option value="warm">warm+</option>
+                        <option value="">All properties</option>
+                        <option value="hot">Great picks only</option>
+                        <option value="warm">Good and above</option>
                     </select>
                 </div>
-                <div class="filter-group">
-                    <label>Days</label>
-                    <select id="filterDays">
-                        <option value="">any</option>
-                        <option value="new">new (7d)</option>
-                        <option value="recent">recent (30d)</option>
-                        <option value="stale">stale (90d+)</option>
-                    </select>
+                <button class="btn" onclick="applyFilters()">Search</button>
+                <button class="btn btn-ghost" onclick="resetFilters()">Clear</button>
+            </div>
+        </div>
+
+        <div class="area-insights" id="areaInsights" style="display:none;">
+            <div class="area-insights-header" onclick="toggleAreaInsights()">
+                <h4><span id="areaInsightTitle">Area Insights</span></h4>
+                <span class="area-insights-toggle">-</span>
+            </div>
+            <div class="area-insights-grid" id="areaInsightsGrid"></div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card highlight">
+                <div class="stat-label">Median Price per m2</div>
+                <div class="stat-value" id="statPPS">-</div>
+                <div class="stat-sub">Across filtered properties</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Average Days Listed</div>
+                <div class="stat-value" id="statDays">-</div>
+                <div class="stat-sub">Faster selling = higher demand</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Price Range</div>
+                <div class="stat-value" id="statRange">-</div>
+                <div class="stat-sub">Min to max in selection</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Negotiation Opportunities</div>
+                <div class="stat-value" id="statStale">-</div>
+                <div class="stat-sub">Listed 90+ days</div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Property Map</h3>
+                    <span class="card-badge">Click markers for details</span>
                 </div>
-                <button class="btn" onclick="applyFilters()">Filter</button>
-                <button class="btn btn-ghost" onclick="resetFilters()">Reset</button>
-                <div class="filter-count">
-                    <strong id="filteredCount">0</strong> / <span id="totalCount">0</span>
+                <div class="card-body">
+                    <div id="map"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>Price Distribution</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container"><canvas id="priceChart"></canvas></div>
                 </div>
             </div>
         </div>
 
-        <div class="stats-row">
-            <div class="stat"><div class="stat-label">Median €/m²</div><div class="stat-value" id="statPPS">-</div></div>
-            <div class="stat"><div class="stat-label">Avg Days</div><div class="stat-value" id="statDays">-</div></div>
-            <div class="stat"><div class="stat-label">Price Range</div><div class="stat-value" id="statRange">-</div></div>
-            <div class="stat"><div class="stat-label">Hot Deals</div><div class="stat-value" id="statHot">-</div></div>
-        </div>
-
-        <div class="grid">
+        <div class="main-grid">
             <div class="card">
-                <div class="card-header"><h2>Map</h2><span class="card-badge">green=hot, yellow=warm, gray=cool</span></div>
-                <div class="card-body"><div id="map"></div></div>
+                <div class="card-header">
+                    <h3>Hottest Areas</h3>
+                    <span class="card-badge">By demand score</span>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container"><canvas id="areaChart"></canvas></div>
+                </div>
             </div>
             <div class="card">
-                <div class="card-header"><h2>Price Distribution</h2></div>
-                <div class="card-body"><div class="chart-container"><canvas id="priceChart"></canvas></div></div>
-            </div>
-        </div>
-
-        <div class="grid">
-            <div class="card">
-                <div class="card-header"><h2>Area Demand</h2><span class="card-badge">by avg days on market</span></div>
-                <div class="card-body"><div class="chart-container"><canvas id="areaChart"></canvas></div></div>
-            </div>
-            <div class="card">
-                <div class="card-header"><h2>Time on Market</h2><span class="card-badge">90d+ = negotiable</span></div>
-                <div class="card-body"><div class="chart-container"><canvas id="daysChart"></canvas></div></div>
+                <div class="card-header">
+                    <h3>Time on Market</h3>
+                    <span class="card-badge">90+ days = room to negotiate</span>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container"><canvas id="daysChart"></canvas></div>
+                </div>
             </div>
         </div>
 
         <div class="table-card">
-            <div class="card-header"><h2>Properties</h2><span class="card-badge">click headers to sort</span></div>
+            <div class="card-header">
+                <h3>All Properties</h3>
+                <span class="card-badge" id="compareHint">Select up to 3 to compare</span>
+            </div>
             <div class="table-scroll">
                 <table>
                     <thead>
                         <tr>
-                            <th onclick="sortTable(0)">Score</th>
-                            <th onclick="sortTable(1)">Address</th>
-                            <th onclick="sortTable(2)">Price</th>
-                            <th onclick="sortTable(3)">€/m²</th>
-                            <th onclick="sortTable(4)">Beds</th>
-                            <th onclick="sortTable(5)">m²</th>
-                            <th onclick="sortTable(6)">Type</th>
-                            <th onclick="sortTable(7)">BER</th>
-                            <th onclick="sortTable(8)">Days</th>
+                            <th style="width:40px;"></th>
+                            <th onclick="sortTable('desirability.score')">Score</th>
+                            <th onclick="sortTable('address')">Property</th>
+                            <th onclick="sortTable('priceNum')">Price</th>
+                            <th onclick="sortTable('pricePerSqm')">Per m2</th>
+                            <th onclick="sortTable('bedsNum')">Beds</th>
+                            <th onclick="sortTable('sizeNum')">Size</th>
+                            <th onclick="sortTable('ber')">BER</th>
+                            <th onclick="sortTable('daysNum')">Days</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -355,8 +863,27 @@
         </div>
     </div>
 
+    <div class="compare-panel" id="comparePanel">
+        <div class="compare-header">
+            <h3>Compare Properties</h3>
+            <button class="btn btn-ghost" onclick="clearCompare()">Clear all</button>
+        </div>
+        <div class="compare-grid" id="compareGrid"></div>
+    </div>
+
+    <div class="score-tooltip" id="scoreTooltip">
+        <h4>Why this score?</h4>
+        <div id="scoreBreakdown"></div>
+    </div>
+
 <script>
-let allData = [], filteredData = [], areaStats = {}, map, markers, priceChart, areaChart, daysChart;
+let allData = [], filteredData = [], areaStats = {}, globalStats = {};
+let map, markers, priceChart, areaChart, daysChart;
+let compareList = [];
+let currentSort = { key: 'desirability.score', dir: -1 };
+
+const BER_COSTS = { A: 800, B: 1200, C: 1600, D: 2000, E: 2500, F: 3000, G: 3500 };
+const AVG_HEATING = 2000;
 
 async function loadData() {
     const response = await fetch('dublin_houses.csv');
@@ -376,48 +903,115 @@ async function loadData() {
         obj.lng = parseFloat(obj.longitude) || 0;
         obj.pricePerSqm = obj.sizeNum > 0 ? Math.round(obj.priceNum / obj.sizeNum) : 0;
         obj.area = extractArea(obj.address);
+        obj.heatingCost = obj.ber ? (BER_COSTS[obj.ber[0]] || 2200) : 2200;
+        obj.heatingSaving = AVG_HEATING - obj.heatingCost;
         return obj;
     }).filter(d => d.priceNum > 0);
 
     areaStats = {};
     allData.forEach(d => {
-        if (!areaStats[d.area]) areaStats[d.area] = { days: [], pps: [] };
-        if (d.daysNum > 0) areaStats[d.area].days.push(d.daysNum);
-        if (d.pricePerSqm > 0) areaStats[d.area].pps.push(d.pricePerSqm);
+        if (!areaStats[d.area]) areaStats[d.area] = { days: [], pps: [], prices: [], count: 0, types: {} };
+        const s = areaStats[d.area];
+        s.count++;
+        if (d.daysNum > 0) s.days.push(d.daysNum);
+        if (d.pricePerSqm > 0) s.pps.push(d.pricePerSqm);
+        s.prices.push(d.priceNum);
+        s.types[d.property_type] = (s.types[d.property_type] || 0) + 1;
     });
 
     const allDays = allData.filter(d => d.daysNum > 0).map(d => d.daysNum);
     const medianDays = allDays.sort((a,b) => a-b)[Math.floor(allDays.length / 2)] || 60;
 
+    const allPrices = allData.map(d => d.priceNum).sort((a,b) => a-b);
+    const p25 = allPrices[Math.floor(allPrices.length * 0.25)];
+    const p75 = allPrices[Math.floor(allPrices.length * 0.75)];
+
     Object.keys(areaStats).forEach(area => {
         const s = areaStats[area];
         s.avgDays = s.days.length ? s.days.reduce((a,b) => a+b, 0) / s.days.length : medianDays;
         s.avgPPS = s.pps.length ? s.pps.reduce((a,b) => a+b, 0) / s.pps.length : 0;
+        s.avgPrice = s.prices.reduce((a,b) => a+b, 0) / s.prices.length;
+        s.minPrice = Math.min(...s.prices);
+        s.maxPrice = Math.max(...s.prices);
         s.demandScore = Math.max(0, Math.min(100, 100 - (s.avgDays / medianDays * 50)));
+        s.tier = s.avgPrice < p25 ? 'affordable' : s.avgPrice > p75 ? 'premium' : 'midrange';
     });
 
-    allData.forEach(d => { d.desirability = calcDesirability(d); });
+    const allPPS = allData.filter(d => d.pricePerSqm > 0).map(d => d.pricePerSqm).sort((a,b) => a-b);
+    globalStats = { medianDays, allPPS };
+
+    allData.forEach(d => {
+        d.desirability = calcDesirability(d);
+        d.badges = calcBadges(d);
+        d.ppsPercentile = calcPercentile(d.pricePerSqm, allPPS);
+    });
+
     filteredData = [...allData];
     initDashboard();
 }
 
 function calcDesirability(d) {
     let score = 0;
+    let breakdown = {};
     const area = areaStats[d.area] || {};
-    score += (area.demandScore || 50) * 0.40;
+
+    const demandScore = area.demandScore || 50;
+    score += demandScore * 0.40;
+    breakdown.demand = { value: Math.round(demandScore), weight: 40, label: 'Area Demand', desc: area.avgDays ? 'Avg ' + Math.round(area.avgDays) + ' days to sell' : 'Unknown' };
+
+    let valueScore = 50;
     if (d.pricePerSqm > 0 && area.avgPPS > 0) {
         const r = d.pricePerSqm / area.avgPPS;
-        score += (r < 0.8 ? 100 : r < 0.95 ? 75 : r < 1.1 ? 50 : 25) * 0.25;
-    } else score += 50 * 0.25;
+        valueScore = r < 0.8 ? 100 : r < 0.95 ? 75 : r < 1.1 ? 50 : 25;
+    }
+    score += valueScore * 0.25;
+    breakdown.value = { value: valueScore, weight: 25, label: 'Value for Area', desc: area.avgPPS ? 'Area avg ' + area.avgPPS.toLocaleString() + '/m2' : 'Unknown' };
+
     const berScores = { A: 100, B: 80, C: 60, D: 40, E: 25, F: 15, G: 10 };
-    score += (d.ber ? (berScores[d.ber[0]] || 30) : 30) * 0.20;
+    const berScore = d.ber ? (berScores[d.ber[0]] || 30) : 30;
+    score += berScore * 0.20;
+    breakdown.ber = { value: berScore, weight: 20, label: 'Energy Efficiency', desc: d.ber ? 'BER ' + d.ber + ' = ~' + d.heatingCost + '/yr heating' : 'No BER rating' };
+
     const typeScores = { Detached: 100, 'Semi-D': 85, Semi: 85, Bungalow: 80, Terrace: 70, End: 75 };
-    let ts = 60;
-    for (const [t, p] of Object.entries(typeScores)) { if (d.property_type?.includes(t)) { ts = p; break; } }
-    score += ts * 0.15;
-    if (score >= 70) return { score: Math.round(score), level: 'hot' };
-    if (score >= 50) return { score: Math.round(score), level: 'warm' };
-    return { score: Math.round(score), level: 'cool' };
+    let typeScore = 60;
+    for (const [t, p] of Object.entries(typeScores)) {
+        if (d.property_type && d.property_type.includes(t)) { typeScore = p; break; }
+    }
+    score += typeScore * 0.15;
+    breakdown.type = { value: typeScore, weight: 15, label: 'Property Type', desc: d.property_type || 'Unknown type' };
+
+    const level = score >= 70 ? 'hot' : score >= 50 ? 'warm' : 'cool';
+    return { score: Math.round(score), level, breakdown };
+}
+
+function calcBadges(d) {
+    const badges = [];
+    const area = areaStats[d.area] || {};
+
+    if (d.priceNum <= 500000 && d.bedsNum >= 3 && d.ber && 'ABC'.includes(d.ber[0]) && d.sizeNum >= 80) {
+        badges.push({ type: 'ftb', label: 'FTB Pick', icon: '\uD83C\uDFAF' });
+    }
+
+    if (d.daysNum > 0 && d.daysNum <= 14 && area.avgPPS && d.pricePerSqm < area.avgPPS * 0.95) {
+        badges.push({ type: 'fast', label: 'Act Fast', icon: '\u26A1' });
+    }
+
+    if (d.daysNum >= 60) {
+        badges.push({ type: 'negotiate', label: 'Negotiate', icon: '\uD83D\uDCAC' });
+    }
+
+    if (d.sizeNum >= 100 && area.avgPPS && d.pricePerSqm < area.avgPPS * 0.85 && area.tier !== 'premium') {
+        badges.push({ type: 'gem', label: 'Hidden Gem', icon: '\uD83D\uDC8E' });
+    }
+
+    return badges;
+}
+
+function calcPercentile(value, sortedArray) {
+    if (!value || !sortedArray.length) return 50;
+    let count = 0;
+    for (const v of sortedArray) { if (v < value) count++; else break; }
+    return Math.round((1 - count / sortedArray.length) * 100);
 }
 
 function parseCSVLine(line) {
@@ -432,11 +1026,20 @@ function parseCSVLine(line) {
 
 function extractArea(addr) {
     const p = addr.split(',');
-    if (p.length >= 2) { let a = p[p.length - 2].trim().replace(/Dublin \d+/gi, '').trim(); return a || p[p.length-2].trim(); }
+    if (p.length >= 2) {
+        let a = p[p.length - 2].trim().replace(/Dublin \d+/gi, '').trim();
+        return a || p[p.length - 2].trim();
+    }
     return 'Dublin';
 }
 
-function initDashboard() { updateStats(); genInsights(); initMap(); initCharts(); renderTable(); }
+function initDashboard() {
+    updateStats();
+    genInsights();
+    initMap();
+    initCharts();
+    renderTable();
+}
 
 function updateStats() {
     const d = filteredData;
@@ -446,188 +1049,612 @@ function updateStats() {
     const hot = d.filter(x => x.desirability.level === 'hot').length;
     const stale = d.filter(x => x.daysNum >= 90).length;
 
-    document.getElementById('headerTotal').textContent = d.length;
-    document.getElementById('totalCount').textContent = allData.length;
-    document.getElementById('filteredCount').textContent = d.length;
+    document.getElementById('headerTotal').textContent = d.length.toLocaleString();
+    document.getElementById('totalCount').textContent = allData.length.toLocaleString();
+    document.getElementById('filteredCount').textContent = d.length.toLocaleString();
     document.getElementById('headerHot').textContent = hot;
-    document.getElementById('headerStale').textContent = stale;
-    document.getElementById('statHot').textContent = hot;
+    document.getElementById('statStale').textContent = stale;
 
     if (prices.length) {
         const med = prices[Math.floor(prices.length / 2)];
-        document.getElementById('headerMedian').textContent = '€' + (med/1000).toFixed(0) + 'k';
-        document.getElementById('statRange').textContent = (prices[0]/1000).toFixed(0) + 'k-' + (prices[prices.length-1]/1e6).toFixed(1) + 'M';
+        document.getElementById('headerMedian').textContent = (med/1000).toFixed(0) + 'k';
+        document.getElementById('statRange').textContent = (prices[0]/1000).toFixed(0) + 'k - ' + (prices[prices.length-1]/1e6).toFixed(1) + 'M';
     }
-    if (pps.length) document.getElementById('statPPS').textContent = '€' + pps[Math.floor(pps.length/2)].toLocaleString();
-    if (days.length) document.getElementById('statDays').textContent = Math.round(days.reduce((a,b)=>a+b,0)/days.length);
+    if (pps.length) {
+        document.getElementById('statPPS').textContent = pps[Math.floor(pps.length/2)].toLocaleString();
+    }
+    if (days.length) {
+        document.getElementById('statDays').textContent = Math.round(days.reduce((a,b)=>a+b,0)/days.length) + ' days';
+    }
 }
 
 function genInsights() {
-    const c = document.getElementById('insights'); c.replaceChildren();
-    const topAreas = Object.entries(areaStats).filter(([_,v]) => v.days.length >= 3)
-        .sort((a,b) => b[1].demandScore - a[1].demandScore).slice(0,3).map(([a]) => a);
+    const c = document.getElementById('insightsBar');
+    c.textContent = '';
+
+    const topAreas = Object.entries(areaStats)
+        .filter(([_,v]) => v.days.length >= 3)
+        .sort((a,b) => b[1].demandScore - a[1].demandScore)
+        .slice(0, 3)
+        .map(([a]) => a);
+
     if (topAreas.length) {
-        const div = document.createElement('div'); div.className = 'insight';
-        div.innerHTML = '<strong>Hottest areas:</strong> ' + topAreas.join(', ');
-        c.appendChild(div);
+        const chip = document.createElement('div');
+        chip.className = 'insight-chip hot';
+        chip.innerHTML = '<span class="icon">\uD83D\uDD25</span> Hottest: <strong>' + topAreas.join(', ') + '</strong>';
+        c.appendChild(chip);
     }
+
+    const newL = filteredData.filter(x => x.daysNum > 0 && x.daysNum <= 7).length;
+    if (newL) {
+        const chip = document.createElement('div');
+        chip.className = 'insight-chip new';
+        chip.innerHTML = '<span class="icon">\u2728</span> <strong>' + newL + '</strong> new this week';
+        c.appendChild(chip);
+    }
+
     const stale = filteredData.filter(x => x.daysNum >= 90).length;
     if (stale) {
-        const div = document.createElement('div'); div.className = 'insight warn';
-        div.innerHTML = '<strong>' + stale + '</strong> properties 90+ days — negotiation targets';
-        c.appendChild(div);
+        const chip = document.createElement('div');
+        chip.className = 'insight-chip warn';
+        chip.innerHTML = '<span class="icon">\uD83D\uDCAC</span> <strong>' + stale + '</strong> negotiation opportunities';
+        c.appendChild(chip);
     }
-    const newL = filteredData.filter(x => x.daysNum <= 7).length;
-    if (newL) {
-        const div = document.createElement('div'); div.className = 'insight';
-        div.innerHTML = '<strong>' + newL + '</strong> new this week';
-        c.appendChild(div);
+
+    const ftbCount = filteredData.filter(x => x.badges.some(b => b.type === 'ftb')).length;
+    if (ftbCount) {
+        const chip = document.createElement('div');
+        chip.className = 'insight-chip';
+        chip.innerHTML = '<span class="icon">\uD83C\uDFAF</span> <strong>' + ftbCount + '</strong> first-time buyer picks';
+        c.appendChild(chip);
     }
+}
+
+function showAreaInsights(area) {
+    const s = areaStats[area];
+    if (!s) return;
+
+    const panel = document.getElementById('areaInsights');
+    const title = document.getElementById('areaInsightTitle');
+    const grid = document.getElementById('areaInsightsGrid');
+
+    title.textContent = area + ' Insights';
+
+    const tierLabels = { affordable: 'Affordable', midrange: 'Mid-range', premium: 'Premium' };
+
+    grid.textContent = '';
+
+    const stats = [
+        { label: 'Avg Price', value: (s.avgPrice/1000).toFixed(0) + 'k' },
+        { label: 'Price Range', value: (s.minPrice/1000).toFixed(0) + 'k - ' + (s.maxPrice/1000).toFixed(0) + 'k' },
+        { label: 'Avg Days to Sell', value: Math.round(s.avgDays) + ' days' },
+        { label: 'Demand Score', value: Math.round(s.demandScore) + '/100' },
+        { label: 'Properties', value: s.count, tier: s.tier, tierLabel: tierLabels[s.tier] }
+    ];
+
+    stats.forEach(stat => {
+        const div = document.createElement('div');
+        div.className = 'area-stat';
+
+        const labelEl = document.createElement('div');
+        labelEl.className = 'area-stat-label';
+        labelEl.textContent = stat.label;
+        div.appendChild(labelEl);
+
+        const valueEl = document.createElement('div');
+        valueEl.className = 'area-stat-value';
+        valueEl.textContent = stat.value;
+        div.appendChild(valueEl);
+
+        if (stat.tier) {
+            const tagEl = document.createElement('span');
+            tagEl.className = 'area-tag ' + stat.tier;
+            tagEl.textContent = stat.tierLabel;
+            div.appendChild(tagEl);
+        }
+
+        grid.appendChild(div);
+    });
+
+    panel.style.display = 'block';
+}
+
+function toggleAreaInsights() {
+    const grid = document.getElementById('areaInsightsGrid');
+    grid.style.display = grid.style.display === 'none' ? 'grid' : 'none';
 }
 
 function initMap() {
     map = L.map('map').setView([53.33, -6.26], 11);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '©OSM ©CartoDB' }).addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: 'OSM CartoDB'
+    }).addTo(map);
+
     markers = L.markerClusterGroup({
-        iconCreateFunction: cl => L.divIcon({
-            html: '<div style="background:#00ff88;color:#000;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font:bold 11px monospace;">' + cl.getChildCount() + '</div>',
-            className: '', iconSize: [28, 28]
-        })
+        iconCreateFunction: function(cl) {
+            return L.divIcon({
+                html: '<div style="background:#C05746;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font:600 12px Outfit,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.2);">' + cl.getChildCount() + '</div>',
+                className: '',
+                iconSize: [32, 32]
+            });
+        }
     });
-    updateMapMarkers(); map.addLayer(markers);
+
+    updateMapMarkers();
+    map.addLayer(markers);
 }
 
 function updateMapMarkers() {
     markers.clearLayers();
     filteredData.forEach(d => {
         if (d.lat && d.lng) {
-            const colors = { hot: '#00ff88', warm: '#ffaa00', cool: '#666' };
-            const m = L.circleMarker([d.lat, d.lng], { radius: 5, fillColor: colors[d.desirability.level], color: '#000', weight: 1, fillOpacity: 0.9 });
-            m.bindPopup('<div style="font:12px monospace;"><b>' + d.address.substring(0,40) + '</b><br>' + d.price + ' | ' + d.beds + ' | ' + (d.ber||'-') + '<br>Score: ' + d.desirability.score + '<br><a href="' + d.url + '" target="_blank">view →</a></div>');
+            const colors = { hot: '#6B9080', warm: '#E0A458', cool: '#A8A097' };
+            const m = L.circleMarker([d.lat, d.lng], {
+                radius: 6,
+                fillColor: colors[d.desirability.level],
+                color: '#fff',
+                weight: 2,
+                fillOpacity: 0.9
+            });
+
+            const badges = d.badges.map(function(b) {
+                return '<span style="background:#f5f5f5;padding:2px 6px;border-radius:4px;font-size:10px;">' + b.icon + ' ' + b.label + '</span>';
+            }).join(' ');
+
+            const popupContent = '<div style="font-size:13px;min-width:200px;">' +
+                '<div style="font-weight:600;margin-bottom:8px;">' + d.address.substring(0, 45) + (d.address.length > 45 ? '...' : '') + '</div>' +
+                '<div style="display:flex;justify-content:space-between;margin-bottom:4px;">' +
+                '<span style="color:#7a7067;">Price</span>' +
+                '<strong>' + d.price + '</strong></div>' +
+                '<div style="display:flex;justify-content:space-between;margin-bottom:4px;">' +
+                '<span style="color:#7a7067;">Size</span>' +
+                '<span>' + d.beds + ' bed - ' + (d.size_sqm || '?') + 'm2 - ' + (d.ber || 'No BER') + '</span></div>' +
+                '<div style="display:flex;justify-content:space-between;margin-bottom:8px;">' +
+                '<span style="color:#7a7067;">Score</span>' +
+                '<span style="font-weight:600;color:' + colors[d.desirability.level] + ';">' + d.desirability.score + '/100</span></div>' +
+                (badges ? '<div style="margin-bottom:8px;">' + badges + '</div>' : '') +
+                '<a href="' + d.url + '" target="_blank" style="color:#C05746;">View on Daft</a></div>';
+
+            m.bindPopup(popupContent);
             markers.addLayer(m);
         }
     });
 }
 
 function initCharts() {
-    Chart.defaults.font.family = "'JetBrains Mono', monospace";
-    Chart.defaults.font.size = 10;
-    Chart.defaults.color = '#808080';
+    Chart.defaults.font.family = "'Outfit', sans-serif";
+    Chart.defaults.font.size = 11;
+    Chart.defaults.color = '#7A7067';
 
-    const priceBuckets = [0,300,400,500,600,700,800,1000,1500,2000,10000];
-    const priceLabels = ['<300k','300-400k','400-500k','500-600k','600-700k','700-800k','800k-1M','1-1.5M','1.5-2M','2M+'];
+    const priceBuckets = [0, 300, 400, 500, 600, 700, 800, 1000, 1500, 2000, 10000];
+    const priceLabels = ['<300k', '300-400k', '400-500k', '500-600k', '600-700k', '700-800k', '800k-1M', '1-1.5M', '1.5-2M', '2M+'];
     const priceCounts = new Array(10).fill(0);
     filteredData.forEach(d => {
         const pk = d.priceNum / 1000;
-        for (let i = 0; i < 9; i++) { if (pk >= priceBuckets[i] && pk < priceBuckets[i+1]) { priceCounts[i]++; break; } }
+        for (let i = 0; i < 10; i++) {
+            if (pk >= priceBuckets[i] && pk < priceBuckets[i + 1]) { priceCounts[i]++; break; }
+        }
     });
 
     if (priceChart) priceChart.destroy();
     priceChart = new Chart(document.getElementById('priceChart'), {
-        type: 'bar', data: { labels: priceLabels, datasets: [{ data: priceCounts, backgroundColor: '#00ff88', borderRadius: 2 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-            scales: { y: { grid: { color: '#2a2a2a' }, border: { display: false } }, x: { grid: { display: false }, border: { display: false } } } }
+        type: 'bar',
+        data: {
+            labels: priceLabels,
+            datasets: [{
+                data: priceCounts,
+                backgroundColor: '#C05746',
+                borderRadius: 6,
+                maxBarThickness: 40
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { grid: { color: '#E8E4DE' }, border: { display: false } },
+                x: { grid: { display: false }, border: { display: false } }
+            }
+        }
     });
 
-    const areaData = Object.entries(areaStats).filter(([_,v]) => v.days.length >= 3)
-        .map(([a, s]) => ({ area: a.substring(0,15), demand: Math.round(s.demandScore) }))
-        .sort((a,b) => b.demand - a.demand).slice(0, 10);
+    const areaData = Object.entries(areaStats)
+        .filter(function(e) { return e[1].days.length >= 3; })
+        .map(function(e) { return { area: e[0].length > 14 ? e[0].substring(0, 14) + '...' : e[0], demand: Math.round(e[1].demandScore) }; })
+        .sort(function(a, b) { return b.demand - a.demand; })
+        .slice(0, 8);
 
     if (areaChart) areaChart.destroy();
     areaChart = new Chart(document.getElementById('areaChart'), {
-        type: 'bar', data: { labels: areaData.map(a=>a.area), datasets: [{ data: areaData.map(a=>a.demand), backgroundColor: areaData.map((_,i) => i < 3 ? '#00ff88' : '#00aa55'), borderRadius: 2 }] },
-        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-            scales: { x: { max: 100, grid: { color: '#2a2a2a' }, border: { display: false } }, y: { grid: { display: false }, border: { display: false } } } }
+        type: 'bar',
+        data: {
+            labels: areaData.map(function(a) { return a.area; }),
+            datasets: [{
+                data: areaData.map(function(a) { return a.demand; }),
+                backgroundColor: areaData.map(function(_, i) { return i < 3 ? '#6B9080' : '#A8C5B8'; }),
+                borderRadius: 6,
+                maxBarThickness: 24
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { max: 100, grid: { color: '#E8E4DE' }, border: { display: false } },
+                y: { grid: { display: false }, border: { display: false } }
+            }
+        }
     });
 
-    const daysBuckets = [0,7,30,60,90,180,365,9999];
-    const daysLabels = ['<7d','7-30d','30-60d','60-90d','90-180d','180-365d','1yr+'];
+    const daysBuckets = [0, 7, 30, 60, 90, 180, 365, 9999];
+    const daysLabels = ['<7d', '7-30d', '30-60d', '60-90d', '90-180d', '180-365d', '1yr+'];
     const daysCounts = new Array(7).fill(0);
-    filteredData.forEach(d => { for (let i = 0; i < 7; i++) { if (d.daysNum >= daysBuckets[i] && d.daysNum < daysBuckets[i+1]) { daysCounts[i]++; break; } } });
+    filteredData.forEach(d => {
+        for (let i = 0; i < 7; i++) {
+            if (d.daysNum >= daysBuckets[i] && d.daysNum < daysBuckets[i + 1]) { daysCounts[i]++; break; }
+        }
+    });
 
     if (daysChart) daysChart.destroy();
     daysChart = new Chart(document.getElementById('daysChart'), {
-        type: 'bar', data: { labels: daysLabels, datasets: [{ data: daysCounts, backgroundColor: daysCounts.map((_,i) => i < 2 ? '#00ff88' : i < 4 ? '#ffaa00' : '#ff4444'), borderRadius: 2 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-            scales: { y: { grid: { color: '#2a2a2a' }, border: { display: false } }, x: { grid: { display: false }, border: { display: false } } } }
+        type: 'bar',
+        data: {
+            labels: daysLabels,
+            datasets: [{
+                data: daysCounts,
+                backgroundColor: daysCounts.map(function(_, i) { return i < 2 ? '#6B9080' : i < 4 ? '#E0A458' : '#C05746'; }),
+                borderRadius: 6,
+                maxBarThickness: 40
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { grid: { color: '#E8E4DE' }, border: { display: false } },
+                x: { grid: { display: false }, border: { display: false } }
+            }
+        }
     });
 }
 
 function renderTable() {
-    const tbody = document.getElementById('tableBody'); tbody.replaceChildren();
-    const sorted = [...filteredData].sort((a,b) => b.desirability.score - a.desirability.score);
-    sorted.slice(0, 500).forEach(d => {
+    const tbody = document.getElementById('tableBody');
+    tbody.textContent = '';
+
+    const sorted = filteredData.slice().sort(function(a, b) {
+        let va = currentSort.key === 'desirability.score' ? a.desirability.score : a[currentSort.key];
+        let vb = currentSort.key === 'desirability.score' ? b.desirability.score : b[currentSort.key];
+        if (typeof va === 'string') return currentSort.dir * va.localeCompare(vb);
+        return currentSort.dir * ((vb || 0) - (va || 0));
+    });
+
+    sorted.slice(0, 500).forEach(function(d, idx) {
         const tr = document.createElement('tr');
         const des = d.desirability;
-        const daysClass = d.daysNum >= 90 ? 'days-old' : d.daysNum <= 7 ? 'days-new' : '';
+        const daysClass = d.daysNum >= 90 ? 'days-old' : d.daysNum <= 7 && d.daysNum > 0 ? 'days-new' : '';
         const berClass = d.ber ? (d.ber[0] <= 'B' ? 'ber-good' : d.ber[0] <= 'C' ? 'ber-ok' : 'ber-bad') : '';
+        const isCompared = compareList.includes(d.listing_id);
 
-        const cells = [
-            { html: '<span class="score score-' + des.level + '">' + des.score + '</span>' },
-            { text: d.address.substring(0, 35) + (d.address.length > 35 ? '...' : '') },
-            { text: d.price, cls: 'price' },
-            { text: d.pricePerSqm > 0 ? '€' + d.pricePerSqm.toLocaleString() : '-' },
-            { text: d.beds || '-' },
-            { text: d.size_sqm || '-' },
-            { text: d.property_type || '-' },
-            { text: d.ber || '-', cls: berClass },
-            { text: d.daysNum || '-', cls: daysClass },
-            { html: '<a href="' + d.url + '" target="_blank">→</a>' }
-        ];
+        // Compare checkbox
+        const td1 = document.createElement('td');
+        const checkDiv = document.createElement('div');
+        checkDiv.className = 'compare-check' + (isCompared ? ' checked' : '');
+        checkDiv.onclick = function() { toggleCompare(d.listing_id); };
+        td1.appendChild(checkDiv);
+        tr.appendChild(td1);
 
-        cells.forEach(c => {
-            const td = document.createElement('td');
-            if (c.cls) td.className = c.cls;
-            if (c.html) td.innerHTML = c.html; else td.textContent = c.text;
-            tr.appendChild(td);
-        });
+        // Score
+        const td2 = document.createElement('td');
+        const scoreDiv = document.createElement('div');
+        scoreDiv.className = 'score-cell';
+        const scoreBadge = document.createElement('span');
+        scoreBadge.className = 'score-badge score-' + des.level;
+        scoreBadge.textContent = des.score;
+        scoreBadge.onclick = function(e) { showScoreBreakdown(e, d); };
+        scoreDiv.appendChild(scoreBadge);
+        td2.appendChild(scoreDiv);
+        tr.appendChild(td2);
+
+        // Property address with badges
+        const td3 = document.createElement('td');
+        const addrDiv = document.createElement('div');
+        addrDiv.style.maxWidth = '280px';
+        const addrText = document.createElement('div');
+        addrText.style.fontWeight = '500';
+        addrText.textContent = d.address.substring(0, 40) + (d.address.length > 40 ? '...' : '');
+        addrDiv.appendChild(addrText);
+
+        if (d.badges.length > 0) {
+            const badgeRow = document.createElement('div');
+            badgeRow.className = 'badge-row';
+            d.badges.forEach(function(b) {
+                const badge = document.createElement('span');
+                badge.className = 'badge badge-' + b.type;
+                badge.textContent = b.icon + ' ' + b.label;
+                badgeRow.appendChild(badge);
+            });
+            addrDiv.appendChild(badgeRow);
+        }
+        td3.appendChild(addrDiv);
+        tr.appendChild(td3);
+
+        // Price with percentile
+        const td4 = document.createElement('td');
+        const priceDiv = document.createElement('div');
+        priceDiv.className = 'price-cell';
+        priceDiv.textContent = d.price;
+        td4.appendChild(priceDiv);
+        if (d.ppsPercentile >= 70) {
+            const percSpan = document.createElement('span');
+            percSpan.className = 'percentile good';
+            percSpan.textContent = 'Cheaper than ' + d.ppsPercentile + '%';
+            td4.appendChild(percSpan);
+        }
+        tr.appendChild(td4);
+
+        // Price per sqm
+        const td5 = document.createElement('td');
+        td5.textContent = d.pricePerSqm > 0 ? d.pricePerSqm.toLocaleString() : '-';
+        tr.appendChild(td5);
+
+        // Beds
+        const td6 = document.createElement('td');
+        td6.textContent = d.beds || '-';
+        tr.appendChild(td6);
+
+        // Size
+        const td7 = document.createElement('td');
+        td7.textContent = d.size_sqm ? d.size_sqm + 'm2' : '-';
+        tr.appendChild(td7);
+
+        // BER with running cost
+        const td8 = document.createElement('td');
+        const berSpan = document.createElement('span');
+        berSpan.className = berClass;
+        berSpan.textContent = d.ber || '-';
+        td8.appendChild(berSpan);
+        if (d.ber) {
+            const costSpan = document.createElement('span');
+            const costClass = d.heatingSaving > 0 ? 'good' : d.heatingSaving < -500 ? 'bad' : '';
+            costSpan.className = 'running-cost ' + costClass;
+            costSpan.textContent = '~' + d.heatingCost + '/yr' + (d.heatingSaving > 0 ? ' (save ' + d.heatingSaving + ')' : '');
+            td8.appendChild(document.createElement('br'));
+            td8.appendChild(costSpan);
+        }
+        tr.appendChild(td8);
+
+        // Days
+        const td9 = document.createElement('td');
+        td9.className = daysClass;
+        td9.textContent = d.daysNum || '-';
+        tr.appendChild(td9);
+
+        // Link
+        const td10 = document.createElement('td');
+        const link = document.createElement('a');
+        link.href = d.url;
+        link.target = '_blank';
+        link.textContent = 'View';
+        td10.appendChild(link);
+        tr.appendChild(td10);
+
         tbody.appendChild(tr);
     });
 }
 
+function showScoreBreakdown(event, d) {
+    event.stopPropagation();
+    const tooltip = document.getElementById('scoreTooltip');
+    const breakdown = document.getElementById('scoreBreakdown');
+    const b = d.desirability.breakdown;
+
+    breakdown.textContent = '';
+    Object.entries(b).forEach(function(entry) {
+        const data = entry[1];
+        const factor = document.createElement('div');
+        factor.className = 'score-factor';
+
+        const left = document.createElement('div');
+        const label = document.createElement('div');
+        label.className = 'score-factor-label';
+        label.textContent = data.label + ' (' + data.weight + '%)';
+        left.appendChild(label);
+        const desc = document.createElement('div');
+        desc.style.fontSize = '11px';
+        desc.style.color = 'var(--text-light)';
+        desc.textContent = data.desc;
+        left.appendChild(desc);
+        factor.appendChild(left);
+
+        const right = document.createElement('div');
+        right.style.display = 'flex';
+        right.style.alignItems = 'center';
+        right.style.gap = '8px';
+        const bar = document.createElement('div');
+        bar.className = 'score-factor-bar';
+        const fill = document.createElement('div');
+        fill.className = 'score-factor-fill';
+        fill.style.width = data.value + '%';
+        bar.appendChild(fill);
+        right.appendChild(bar);
+        const val = document.createElement('span');
+        val.className = 'score-factor-value';
+        val.textContent = data.value;
+        right.appendChild(val);
+        factor.appendChild(right);
+
+        breakdown.appendChild(factor);
+    });
+
+    const rect = event.target.getBoundingClientRect();
+    tooltip.style.left = Math.min(rect.left, window.innerWidth - 300) + 'px';
+    tooltip.style.top = (rect.bottom + 8) + 'px';
+    tooltip.classList.add('active');
+
+    document.addEventListener('click', hideScoreBreakdown);
+}
+
+function hideScoreBreakdown() {
+    document.getElementById('scoreTooltip').classList.remove('active');
+    document.removeEventListener('click', hideScoreBreakdown);
+}
+
+function toggleCompare(id) {
+    const idx = compareList.indexOf(id);
+    if (idx >= 0) {
+        compareList.splice(idx, 1);
+    } else if (compareList.length < 3) {
+        compareList.push(id);
+    }
+    updateComparePanel();
+    renderTable();
+}
+
+function updateComparePanel() {
+    const panel = document.getElementById('comparePanel');
+    const grid = document.getElementById('compareGrid');
+
+    if (compareList.length === 0) {
+        panel.classList.remove('active');
+        return;
+    }
+
+    panel.classList.add('active');
+    grid.textContent = '';
+
+    for (let i = 0; i < 3; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'compare-slot';
+
+        if (compareList[i]) {
+            const d = allData.find(function(x) { return x.listing_id === compareList[i]; });
+            if (d) {
+                slot.classList.add('filled');
+
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'compare-remove';
+                removeBtn.textContent = 'x';
+                removeBtn.onclick = function() { toggleCompare(d.listing_id); };
+                slot.appendChild(removeBtn);
+
+                const prop = document.createElement('div');
+                prop.className = 'compare-property';
+
+                const title = document.createElement('div');
+                title.className = 'compare-property-title';
+                title.textContent = d.address.substring(0, 30) + '...';
+                prop.appendChild(title);
+
+                const details = [
+                    ['Price', d.price],
+                    ['Per m2', d.pricePerSqm ? d.pricePerSqm.toLocaleString() : '-'],
+                    ['Size', d.beds + ' bed - ' + (d.size_sqm || '?') + 'm2'],
+                    ['BER', d.ber || '-'],
+                    ['Score', d.desirability.score + '/100'],
+                    ['Heating', '~' + d.heatingCost + '/yr']
+                ];
+
+                details.forEach(function(detail) {
+                    const row = document.createElement('div');
+                    row.className = 'compare-property-detail';
+                    const labelSpan = document.createElement('span');
+                    labelSpan.textContent = detail[0];
+                    row.appendChild(labelSpan);
+                    const valStrong = document.createElement('strong');
+                    valStrong.textContent = detail[1];
+                    row.appendChild(valStrong);
+                    prop.appendChild(row);
+                });
+
+                slot.appendChild(prop);
+            } else {
+                const empty = document.createElement('div');
+                empty.className = 'compare-slot-empty';
+                empty.textContent = 'Select a property';
+                slot.appendChild(empty);
+            }
+        } else {
+            const empty = document.createElement('div');
+            empty.className = 'compare-slot-empty';
+            empty.textContent = 'Select a property';
+            slot.appendChild(empty);
+        }
+
+        grid.appendChild(slot);
+    }
+}
+
+function clearCompare() {
+    compareList = [];
+    updateComparePanel();
+    renderTable();
+}
+
 function applyFilters() {
-    filteredData = allData.filter(d => {
-        const loc = document.getElementById('filterLocation').value.toLowerCase();
+    const loc = document.getElementById('filterLocation').value.toLowerCase();
+
+    filteredData = allData.filter(function(d) {
         const maxP = document.getElementById('filterPrice').value;
         const minB = document.getElementById('filterBeds').value;
         const type = document.getElementById('filterType').value;
         const ber = document.getElementById('filterBer').value;
         const des = document.getElementById('filterDesire').value;
-        const days = document.getElementById('filterDays').value;
 
-        if (loc && !d.address.toLowerCase().includes(loc)) return false;
+        if (loc && !d.address.toLowerCase().includes(loc) && !d.area.toLowerCase().includes(loc)) return false;
         if (maxP && d.priceNum > parseInt(maxP)) return false;
         if (minB && d.bedsNum < parseInt(minB)) return false;
-        if (type && !d.property_type?.includes(type)) return false;
-        if (ber) { const o = ['A','B','C','D','E','F','G']; if (o.indexOf(d.ber?.[0]) > o.indexOf(ber)) return false; }
+        if (type && (!d.property_type || !d.property_type.includes(type))) return false;
+        if (ber) {
+            const order = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
+            if (!d.ber || order.indexOf(d.ber[0]) > order.indexOf(ber)) return false;
+        }
         if (des === 'hot' && d.desirability.level !== 'hot') return false;
         if (des === 'warm' && d.desirability.level === 'cool') return false;
-        if (days === 'new' && d.daysNum > 7) return false;
-        if (days === 'recent' && d.daysNum > 30) return false;
-        if (days === 'stale' && d.daysNum < 90) return false;
         return true;
     });
-    updateStats(); genInsights(); updateMapMarkers(); initCharts(); renderTable();
+
+    if (loc) {
+        const matchingArea = Object.keys(areaStats).find(function(a) { return a.toLowerCase().includes(loc); });
+        if (matchingArea) showAreaInsights(matchingArea);
+    } else {
+        document.getElementById('areaInsights').style.display = 'none';
+    }
+
+    updateStats();
+    genInsights();
+    updateMapMarkers();
+    initCharts();
+    renderTable();
 }
 
 function resetFilters() {
-    document.querySelectorAll('.filters select').forEach(s => s.value = '');
+    var selects = document.querySelectorAll('.filters-card select');
+    for (var i = 0; i < selects.length; i++) selects[i].value = '';
     document.getElementById('filterLocation').value = '';
-    filteredData = [...allData]; applyFilters();
+    document.getElementById('areaInsights').style.display = 'none';
+    filteredData = allData.slice();
+    applyFilters();
 }
 
-let sortDir = {};
-function sortTable(col) {
-    const keys = ['desirability.score','address','priceNum','pricePerSqm','bedsNum','sizeNum','property_type','ber','daysNum'];
-    sortDir[col] = !sortDir[col];
-    filteredData.sort((a, b) => {
-        let va = col === 0 ? a.desirability.score : a[keys[col]];
-        let vb = col === 0 ? b.desirability.score : b[keys[col]];
-        if (typeof va === 'string') return sortDir[col] ? va.localeCompare(vb) : vb.localeCompare(va);
-        return sortDir[col] ? va - vb : vb - va;
-    });
+function sortTable(key) {
+    if (currentSort.key === key) {
+        currentSort.dir *= -1;
+    } else {
+        currentSort = { key: key, dir: -1 };
+    }
     renderTable();
 }
+
+var filterTimeout;
+document.getElementById('filterLocation').addEventListener('input', function() {
+    clearTimeout(filterTimeout);
+    filterTimeout = setTimeout(applyFilters, 300);
+});
 
 loadData();
 </script>
