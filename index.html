@@ -1133,20 +1133,66 @@ let currentSort = { key: 'desirability.score', dir: -1 };
 let currentTableFilter = 'all';
 let tableSearchTerm = '';
 
+function showLoading(show) {
+    var existing = document.getElementById('loadingOverlay');
+    if (show && !existing) {
+        var overlay = document.createElement('div');
+        overlay.id = 'loadingOverlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(250,248,245,0.9);display:flex;align-items:center;justify-content:center;z-index:2000;';
+        overlay.innerHTML = '<div style="text-align:center;"><div style="width:40px;height:40px;border:3px solid #E8E4DE;border-top-color:#C05746;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;"></div><div style="font-size:15px;color:#7A7067;">Loading properties...</div></div>';
+        document.body.appendChild(overlay);
+        var style = document.createElement('style');
+        style.id = 'loadingStyle';
+        style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+        document.head.appendChild(style);
+    } else if (!show && existing) {
+        existing.remove();
+        var style = document.getElementById('loadingStyle');
+        if (style) style.remove();
+    }
+}
+
+function showError(message) {
+    var container = document.querySelector('.container');
+    var existing = document.getElementById('errorBanner');
+    if (existing) existing.remove();
+    var banner = document.createElement('div');
+    banner.id = 'errorBanner';
+    banner.style.cssText = 'background:#FCE8E6;border:1px solid #C44536;color:#C44536;padding:16px 20px;border-radius:8px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;';
+    banner.innerHTML = '<span>' + message + '</span><button onclick="this.parentElement.remove()" style="background:none;border:none;color:#C44536;font-size:18px;cursor:pointer;">×</button>';
+    container.insertBefore(banner, container.firstChild);
+}
+
+function showEmptyState(show) {
+    var tbody = document.getElementById('tableBody');
+    var existing = document.getElementById('emptyState');
+    if (existing) existing.remove();
+    if (show) {
+        var row = document.createElement('tr');
+        row.id = 'emptyState';
+        row.innerHTML = '<td colspan="10" style="text-align:center;padding:60px 20px;color:#7A7067;"><div style="font-size:15px;margin-bottom:8px;">No properties match your filters</div><div style="font-size:13px;">Try adjusting your search criteria</div></td>';
+        tbody.appendChild(row);
+    }
+}
+
 // Save filters to localStorage
 function saveFilters() {
-    var filters = {
-        area: document.getElementById('filterArea').value,
-        location: document.getElementById('filterLocation').value,
-        price: document.getElementById('filterPrice').value,
-        beds: document.getElementById('filterBeds').value,
-        type: document.getElementById('filterType').value,
-        ber: document.getElementById('filterBer').value,
-        score: document.getElementById('filterDesire').value,
-        tableFilter: currentTableFilter,
-        tableSearch: tableSearchTerm
-    };
-    localStorage.setItem('dublinHomeFilters', JSON.stringify(filters));
+    try {
+        var filters = {
+            area: document.getElementById('filterArea').value,
+            location: document.getElementById('filterLocation').value,
+            price: document.getElementById('filterPrice').value,
+            beds: document.getElementById('filterBeds').value,
+            type: document.getElementById('filterType').value,
+            ber: document.getElementById('filterBer').value,
+            score: document.getElementById('filterDesire').value,
+            tableFilter: currentTableFilter,
+            tableSearch: tableSearchTerm
+        };
+        localStorage.setItem('dublinHomeFilters', JSON.stringify(filters));
+    } catch (e) {
+        // localStorage unavailable (Safari private mode)
+    }
 }
 
 // Load filters from localStorage
@@ -1196,9 +1242,12 @@ function isPreferredArea(address) {
 }
 
 async function loadData() {
-    const response = await fetch('dublin_houses.csv');
-    const text = await response.text();
-    const lines = text.trim().split('\n');
+    showLoading(true);
+    try {
+        const response = await fetch('dublin_houses.csv');
+        if (!response.ok) throw new Error('Failed to load data');
+        const text = await response.text();
+        const lines = text.trim().split('\n');
     const headers = parseCSVLine(lines[0]);
 
     allData = lines.slice(1).map(line => {
@@ -1261,6 +1310,12 @@ async function loadData() {
     initDashboard();
     loadFilters();
     applyFilters();
+    showLoading(false);
+    } catch (error) {
+        showLoading(false);
+        showError('Unable to load property data. Please refresh the page to try again.');
+        console.error('Data load error:', error);
+    }
 }
 
 function calcDesirability(d) {
@@ -1726,6 +1781,12 @@ function renderTable() {
     const tbody = document.getElementById('tableBody');
     tbody.textContent = '';
 
+    if (tableData.length === 0) {
+        showEmptyState(true);
+        return;
+    }
+    showEmptyState(false);
+
     const sorted = tableData.slice().sort(function(a, b) {
         let va = currentSort.key === 'desirability.score' ? a.desirability.score : a[currentSort.key];
         let vb = currentSort.key === 'desirability.score' ? b.desirability.score : b[currentSort.key];
@@ -2037,7 +2098,17 @@ function applyFilters() {
     updateMapMarkers();
     initCharts();
     applyTableFilters();
+    cleanupCompareList();
     saveFilters();
+}
+
+function cleanupCompareList() {
+    // Remove any compared properties that are no longer in filtered data
+    var filteredIds = filteredData.map(function(d) { return d.listing_id; });
+    compareList = compareList.filter(function(id) {
+        return filteredIds.includes(id);
+    });
+    updateComparePanel();
 }
 
 function resetFilters() {
@@ -2053,7 +2124,7 @@ function resetFilters() {
         t.classList.toggle('active', t.dataset.filter === 'all');
     });
     filteredData = allData.slice();
-    localStorage.removeItem('dublinHomeFilters');
+    try { localStorage.removeItem('dublinHomeFilters'); } catch (e) {}
     applyFilters();
 }
 
