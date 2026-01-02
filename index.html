@@ -1791,7 +1791,7 @@ function renderTable() {
         let va = currentSort.key === 'desirability.score' ? a.desirability.score : a[currentSort.key];
         let vb = currentSort.key === 'desirability.score' ? b.desirability.score : b[currentSort.key];
         if (typeof va === 'string') return currentSort.dir * va.localeCompare(vb);
-        return currentSort.dir * ((vb || 0) - (va || 0));
+        return currentSort.dir * ((va || 0) - (vb || 0));
     });
 
     sorted.slice(0, 500).forEach(function(d, idx) {
