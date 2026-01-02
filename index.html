@@ -246,6 +246,7 @@
             border-radius: var(--radius-sm);
             padding: 16px 18px;
             box-shadow: var(--shadow-sm);
+            min-height: 90px;
         }
         .stat-label {
             font-size: 11px;
@@ -302,7 +303,7 @@
         .card-body { padding: 14px 18px; }
 
         .map-card { margin-bottom: 16px; }
-        #map { height: 300px; border-radius: 6px; overflow: hidden; }
+        #map { height: 300px; border-radius: 6px; overflow: hidden; background: var(--bg); }
 
         /* Charts section - collapsible */
         .charts-section {
@@ -530,41 +531,41 @@
             border-color: var(--text);
             color: white;
         }
-        .filter-tab[data-tip]::after {
-            content: 'i';
+        .filter-tab[data-tip] .info-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             width: 14px;
             height: 14px;
-            margin-left: 6px;
+            margin-left: 4px;
             border-radius: 50%;
             background: rgba(0,0,0,0.1);
-            font-size: 10px;
+            font-size: 9px;
             font-style: italic;
+            font-weight: 600;
         }
-        .filter-tab.active[data-tip]::after {
-            background: rgba(255,255,255,0.2);
+        .filter-tab.active .info-icon {
+            background: rgba(255,255,255,0.25);
         }
         .filter-tooltip {
             position: absolute;
-            bottom: calc(100% + 8px);
+            bottom: calc(100% + 10px);
             left: 50%;
             transform: translateX(-50%);
             background: var(--text);
             color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
+            padding: 10px 14px;
+            border-radius: 8px;
             font-size: 12px;
             font-weight: 400;
-            white-space: nowrap;
-            max-width: 280px;
-            white-space: normal;
-            text-align: center;
-            z-index: 100;
+            line-height: 1.4;
+            width: 220px;
+            text-align: left;
+            z-index: 1000;
+            visibility: hidden;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.15s;
+            transition: opacity 0.15s, visibility 0.15s;
             box-shadow: var(--shadow-lg);
         }
         .filter-tooltip::after {
@@ -576,7 +577,9 @@
             border: 6px solid transparent;
             border-top-color: var(--text);
         }
-        .filter-tab:hover .filter-tooltip {
+        .filter-tab:hover .filter-tooltip,
+        .filter-tab:focus .filter-tooltip {
+            visibility: visible;
             opacity: 1;
         }
         .table-search input {
@@ -594,6 +597,7 @@
         }
         .table-scroll {
             max-height: 600px;
+            min-height: 400px;
             overflow: auto;
             -webkit-overflow-scrolling: touch;
         }
@@ -1627,9 +1631,12 @@ function updateFilterCounts() {
     document.querySelectorAll('.filter-tab').forEach(function(tab) {
         var filter = tab.dataset.filter;
         var count = counts[filter] || 0;
-        var label = tab.dataset.label || tab.textContent.split(' ')[0];
-        tab.dataset.label = label;
-        tab.textContent = label + ' (' + count + ')';
+        var label = tab.dataset.label;
+        // Update only the text node, preserve icon and tooltip
+        var textNode = tab.firstChild;
+        if (textNode && textNode.nodeType === 3) {
+            textNode.textContent = label + ' (' + count + ') ';
+        }
     });
 }
 
@@ -2006,8 +2013,16 @@ document.getElementById('filterLocation').addEventListener('input', function() {
 
 // Table filter tabs with tooltips
 document.querySelectorAll('.filter-tab').forEach(function(tab) {
-    // Add tooltip span if has data-tip
+    // Store original label
+    tab.dataset.label = tab.textContent;
+
+    // Add info icon and tooltip if has data-tip
     if (tab.dataset.tip) {
+        var icon = document.createElement('span');
+        icon.className = 'info-icon';
+        icon.textContent = 'i';
+        tab.appendChild(icon);
+
         var tooltip = document.createElement('span');
         tooltip.className = 'filter-tooltip';
         tooltip.textContent = tab.dataset.tip;
