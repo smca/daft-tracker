@@ -426,6 +426,54 @@
             overflow: hidden;
             box-shadow: var(--shadow-sm);
         }
+        .table-filters {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--border-light);
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .table-filter-tabs {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .filter-tab {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg);
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .filter-tab:hover {
+            border-color: var(--text-muted);
+            color: var(--text);
+        }
+        .filter-tab.active {
+            background: var(--text);
+            border-color: var(--text);
+            color: white;
+        }
+        .table-search input {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            min-width: 180px;
+            background: var(--bg);
+        }
+        .table-search input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
         .table-scroll {
             max-height: 600px;
             overflow: auto;
@@ -667,6 +715,11 @@
             .chart-container { height: 220px; }
 
             .table-card { border-radius: 8px; }
+            .table-filters { flex-direction: column; align-items: stretch; padding: 10px 12px; }
+            .table-filter-tabs { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+            .filter-tab { white-space: nowrap; flex-shrink: 0; }
+            .table-search { width: 100%; }
+            .table-search input { width: 100%; min-width: auto; }
             .table-scroll { max-height: 400px; }
             table { font-size: 12px; }
             th, td { padding: 10px 8px; }
@@ -897,6 +950,18 @@
                 <h3>All Properties</h3>
                 <span class="card-badge" id="compareHint">Select up to 3 to compare</span>
             </div>
+            <div class="table-filters">
+                <div class="table-filter-tabs">
+                    <button class="filter-tab active" data-filter="all">All</button>
+                    <button class="filter-tab" data-filter="top">Score 70+</button>
+                    <button class="filter-tab" data-filter="starter">Starter homes</button>
+                    <button class="filter-tab" data-filter="negotiable">Negotiable</button>
+                    <button class="filter-tab" data-filter="new">New listings</button>
+                </div>
+                <div class="table-search">
+                    <input type="text" id="tableSearch" placeholder="Search address...">
+                </div>
+            </div>
             <div class="table-scroll">
                 <table>
                     <thead>
@@ -933,10 +998,12 @@
     </div>
 
 <script>
-let allData = [], filteredData = [], areaStats = {}, globalStats = {};
+let allData = [], filteredData = [], tableData = [], areaStats = {}, globalStats = {};
 let map, markers, priceChart, areaChart, daysChart;
 let compareList = [];
 let currentSort = { key: 'desirability.score', dir: -1 };
+let currentTableFilter = 'all';
+let tableSearchTerm = '';
 
 const BER_COSTS = { A: 800, B: 1200, C: 1600, D: 2000, E: 2500, F: 3000, G: 3500 };
 const AVG_HEATING = 2000;
@@ -1111,6 +1178,7 @@ function extractArea(addr) {
 }
 
 function initDashboard() {
+    tableData = filteredData.slice();
     updateStats();
     genInsights();
     initMap();
@@ -1424,11 +1492,28 @@ function initCharts() {
     });
 }
 
+function applyTableFilters() {
+    tableData = filteredData.filter(function(d) {
+        // Apply table-level filter
+        if (currentTableFilter === 'top' && d.desirability.score < 70) return false;
+        if (currentTableFilter === 'starter' && !d.badges.some(function(b) { return b.type === 'ftb'; })) return false;
+        if (currentTableFilter === 'negotiable' && d.daysNum < 90) return false;
+        if (currentTableFilter === 'new' && (d.daysNum <= 0 || d.daysNum > 14)) return false;
+
+        // Apply search
+        if (tableSearchTerm && !d.address.toLowerCase().includes(tableSearchTerm)) return false;
+
+        return true;
+    });
+
+    renderTable();
+}
+
 function renderTable() {
     const tbody = document.getElementById('tableBody');
     tbody.textContent = '';
 
-    const sorted = filteredData.slice().sort(function(a, b) {
+    const sorted = tableData.slice().sort(function(a, b) {
         let va = currentSort.key === 'desirability.score' ? a.desirability.score : a[currentSort.key];
         let vb = currentSort.key === 'desirability.score' ? b.desirability.score : b[currentSort.key];
         if (typeof va === 'string') return currentSort.dir * va.localeCompare(vb);
@@ -1738,7 +1823,7 @@ function applyFilters() {
     genInsights();
     updateMapMarkers();
     initCharts();
-    renderTable();
+    applyTableFilters();
 }
 
 function resetFilters() {
@@ -1764,6 +1849,24 @@ var filterTimeout;
 document.getElementById('filterLocation').addEventListener('input', function() {
     clearTimeout(filterTimeout);
     filterTimeout = setTimeout(applyFilters, 300);
+});
+
+// Table filter tabs
+document.querySelectorAll('.filter-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.filter-tab').forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        currentTableFilter = tab.dataset.filter;
+        applyTableFilters();
+    });
+});
+
+// Table search
+var tableSearchTimeout;
+document.getElementById('tableSearch').addEventListener('input', function(e) {
+    clearTimeout(tableSearchTimeout);
+    tableSearchTerm = e.target.value.toLowerCase();
+    tableSearchTimeout = setTimeout(applyTableFilters, 200);
 });
 
 loadData();
