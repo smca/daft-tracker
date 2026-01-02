@@ -1468,6 +1468,22 @@ function initMap() {
 
 function updateMapMarkers() {
     markers.clearLayers();
+
+    // Center map based on filter
+    var areaFilter = document.getElementById('filterArea').value;
+    if (areaFilter === 'preferred') {
+        map.setView([53.27, -6.12], 12);
+    } else if (filteredData.length > 0) {
+        // Fit to bounds of filtered data
+        var lats = filteredData.filter(function(d) { return d.lat; }).map(function(d) { return d.lat; });
+        var lngs = filteredData.filter(function(d) { return d.lng; }).map(function(d) { return d.lng; });
+        if (lats.length > 0) {
+            var bounds = [[Math.min.apply(null, lats), Math.min.apply(null, lngs)], [Math.max.apply(null, lats), Math.max.apply(null, lngs)]];
+            map.fitBounds(bounds, { padding: [20, 20] });
+        }
+    } else {
+        map.setView([53.33, -6.26], 11);
+    }
     filteredData.forEach(d => {
         if (d.lat && d.lng) {
             const colors = { hot: '#6B9080', warm: '#E0A458', cool: '#A8A097' };
