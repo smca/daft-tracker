@@ -124,11 +124,6 @@ Note: Asking prices in Dublin typically sell 7-8% above listed price based on 20
 - Read specific sections with offset/limit rather than the whole file.
 - CSS, HTML, and JS are all in one file - be careful with large edits.
 
-**Security rules:**
-- Never use `innerHTML` with user/CSV data. Use `textContent` or `createElement`.
-- Use `escapeHtml()` if you must build HTML strings.
-- CDN resources need SRI integrity hashes.
-
 **Git workflow:**
 - Branch naming: `claude/<description>-<session-id>` (the session ID is provided)
 - Can't push directly to main - always use feature branches
