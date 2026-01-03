@@ -663,6 +663,21 @@
         .badge-negotiate { background: #FEF3E2; color: #B8863F; }
         .badge-gem { background: #E8EEF8; color: #4A6FA5; }
 
+        /* Source badges */
+        .source-badge {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+        .source-daft { background: #E3F2FD; color: #1565C0; }
+        .source-myhome { background: #E8F5E9; color: #2E7D32; }
+
         /* Score */
         .score-cell {
             display: flex;
@@ -934,6 +949,14 @@
                     <strong id="headerTotal">-</strong>
                 </div>
                 <div class="header-stat">
+                    <span>Daft</span>
+                    <strong id="headerDaft">-</strong>
+                </div>
+                <div class="header-stat">
+                    <span>MyHome</span>
+                    <strong id="headerMyhome">-</strong>
+                </div>
+                <div class="header-stat">
                     <span>Median</span>
                     <strong id="headerMedian">-</strong>
                 </div>
@@ -956,6 +979,14 @@
                 </div>
             </div>
             <div class="filters-row filters-collapsible">
+                <div class="filter-group">
+                    <label>Source</label>
+                    <select id="filterSource">
+                        <option value="">All sources</option>
+                        <option value="daft">Daft.ie only</option>
+                        <option value="myhome">MyHome.ie only</option>
+                    </select>
+                </div>
                 <div class="filter-group">
                     <label>Area</label>
                     <select id="filterArea">
@@ -1187,6 +1218,7 @@ function showEmptyState(show) {
 function saveFilters() {
     try {
         var filters = {
+            source: document.getElementById('filterSource').value,
             area: document.getElementById('filterArea').value,
             location: document.getElementById('filterLocation').value,
             price: document.getElementById('filterPrice').value,
@@ -1209,6 +1241,7 @@ function loadFilters() {
         var saved = localStorage.getItem('dublinHomeFilters');
         if (saved) {
             var filters = JSON.parse(saved);
+            if (filters.source) document.getElementById('filterSource').value = filters.source;
             if (filters.area) document.getElementById('filterArea').value = filters.area;
             if (filters.location) document.getElementById('filterLocation').value = filters.location;
             if (filters.price) document.getElementById('filterPrice').value = filters.price;
@@ -1233,6 +1266,36 @@ function loadFilters() {
 const BER_COSTS = { A: 800, B: 1200, C: 1600, D: 2000, E: 2500, F: 3000, G: 3500 };
 const AVG_HEATING = 2000;
 
+function parseCSV(text, source) {
+    const lines = text.trim().split('\n');
+    const headers = parseCSVLine(lines[0]);
+
+    return lines.slice(1).map(line => {
+        const values = parseCSVLine(line);
+        const obj = {};
+        headers.forEach((h, i) => obj[h] = values[i] || '');
+
+        // Normalize field names between sources
+        obj.source = source;
+        obj.priceNum = parseInt(obj.price_num) || parseInt(obj.price.replace(/[^0-9]/g, '')) || 0;
+        // Handle "2 Bed" or "2" format
+        obj.bedsNum = parseInt(obj.beds) || 0;
+        obj.sizeNum = parseFloat(obj.size_sqm) || 0;
+        obj.daysNum = parseInt(obj.days_on_market) || 0;
+        obj.lat = parseFloat(obj.latitude) || 0;
+        obj.lng = parseFloat(obj.longitude) || 0;
+        obj.pricePerSqm = obj.sizeNum > 0 ? Math.round(obj.priceNum / obj.sizeNum) : 0;
+        obj.area = extractArea(obj.address);
+        obj.heatingCost = obj.ber ? (BER_COSTS[obj.ber[0]] || 2200) : 2200;
+        obj.heatingSaving = AVG_HEATING - obj.heatingCost;
+        obj.inPreferredArea = isPreferredArea(obj.address);
+        // Normalize beds display for table
+        obj.bedsDisplay = obj.bedsNum ? obj.bedsNum + ' bed' : '-';
+
+        return obj;
+    });
+}
+
 // Preferred areas (South Dublin / North Wicklow coast)
 const PREFERRED_AREAS = [
     'dun laoghaire', 'dunlaoghaire', 'dún laoghaire',
@@ -1252,29 +1315,27 @@ function isPreferredArea(address) {
 async function loadData() {
     showLoading(true);
     try {
-        const response = await fetch('dublin_houses.csv');
-        if (!response.ok) throw new Error('Failed to load data');
-        const text = await response.text();
-        const lines = text.trim().split('\n');
-    const headers = parseCSVLine(lines[0]);
+        // Load both data sources in parallel
+        const [daftResponse, myhomeResponse] = await Promise.all([
+            fetch('dublin_houses.csv'),
+            fetch('myhome_dublin.csv').catch(() => null)
+        ]);
 
-    allData = lines.slice(1).map(line => {
-        const values = parseCSVLine(line);
-        const obj = {};
-        headers.forEach((h, i) => obj[h] = values[i] || '');
-        obj.priceNum = parseInt(obj.price.replace(/[^0-9]/g, '')) || 0;
-        obj.bedsNum = parseInt(obj.beds) || 0;
-        obj.sizeNum = parseFloat(obj.size_sqm) || 0;
-        obj.daysNum = parseInt(obj.days_on_market) || 0;
-        obj.lat = parseFloat(obj.latitude) || 0;
-        obj.lng = parseFloat(obj.longitude) || 0;
-        obj.pricePerSqm = obj.sizeNum > 0 ? Math.round(obj.priceNum / obj.sizeNum) : 0;
-        obj.area = extractArea(obj.address);
-        obj.heatingCost = obj.ber ? (BER_COSTS[obj.ber[0]] || 2200) : 2200;
-        obj.heatingSaving = AVG_HEATING - obj.heatingCost;
-        obj.inPreferredArea = isPreferredArea(obj.address);
-        return obj;
-    }).filter(d => d.priceNum > 0);
+        if (!daftResponse.ok) throw new Error('Failed to load Daft data');
+
+        // Parse Daft data
+        const daftText = await daftResponse.text();
+        const daftData = parseCSV(daftText, 'daft');
+
+        // Parse MyHome data if available
+        let myhomeData = [];
+        if (myhomeResponse && myhomeResponse.ok) {
+            const myhomeText = await myhomeResponse.text();
+            myhomeData = parseCSV(myhomeText, 'myhome');
+        }
+
+        // Combine both sources
+        allData = [...daftData, ...myhomeData].filter(d => d.priceNum > 0);
 
     areaStats = {};
     allData.forEach(d => {
@@ -1432,7 +1493,13 @@ function updateStats() {
     const hot = d.filter(x => x.desirability.level === 'hot').length;
     const negotiable = d.filter(x => x.daysNum >= 90).length;
 
+    // Source counts
+    const daftCount = d.filter(x => x.source === 'daft').length;
+    const myhomeCount = d.filter(x => x.source === 'myhome').length;
+
     document.getElementById('headerTotal').textContent = d.length.toLocaleString();
+    document.getElementById('headerDaft').textContent = daftCount.toLocaleString();
+    document.getElementById('headerMyhome').textContent = myhomeCount.toLocaleString();
     document.getElementById('totalCount').textContent = allData.length.toLocaleString();
     document.getElementById('filteredCount').textContent = d.length.toLocaleString();
     document.getElementById('headerHot').textContent = hot;
@@ -1843,6 +1910,12 @@ function renderTable() {
         addrLink.textContent = d.address.substring(0, 40) + (d.address.length > 40 ? '...' : '');
         addrDiv.appendChild(addrLink);
 
+        // Source badge
+        const sourceBadge = document.createElement('span');
+        sourceBadge.className = 'source-badge source-' + d.source;
+        sourceBadge.textContent = d.source === 'daft' ? 'Daft' : 'MyHome';
+        addrDiv.appendChild(sourceBadge);
+
         if (d.badges.length > 0) {
             const badgeRow = document.createElement('div');
             badgeRow.className = 'badge-row';
@@ -1878,7 +1951,7 @@ function renderTable() {
 
         // Beds
         const td6 = document.createElement('td');
-        td6.textContent = d.beds || '-';
+        td6.textContent = d.bedsNum || '-';
         tr.appendChild(td6);
 
         // Size
@@ -1913,8 +1986,9 @@ function renderTable() {
         const link = document.createElement('a');
         link.href = d.url;
         link.target = '_blank';
-        link.textContent = 'Daft';
-        link.style.cssText = 'display:inline-block;padding:4px 10px;background:var(--primary);color:white;border-radius:4px;font-size:11px;font-weight:500;text-decoration:none;';
+        link.textContent = d.source === 'daft' ? 'Daft' : 'MyHome';
+        var linkBg = d.source === 'daft' ? '#1565C0' : '#2E7D32';
+        link.style.cssText = 'display:inline-block;padding:4px 10px;background:' + linkBg + ';color:white;border-radius:4px;font-size:11px;font-weight:500;text-decoration:none;';
         td10.appendChild(link);
         tr.appendChild(td10);
 
@@ -2073,6 +2147,7 @@ function clearCompare() {
 function applyFilters() {
     const loc = document.getElementById('filterLocation').value.toLowerCase();
     const areaFilter = document.getElementById('filterArea').value;
+    const sourceFilter = document.getElementById('filterSource').value;
 
     filteredData = allData.filter(function(d) {
         const maxP = document.getElementById('filterPrice').value;
@@ -2081,6 +2156,7 @@ function applyFilters() {
         const ber = document.getElementById('filterBer').value;
         const des = document.getElementById('filterDesire').value;
 
+        if (sourceFilter && d.source !== sourceFilter) return false;
         if (areaFilter === 'preferred' && !isPreferredArea(d.address)) return false;
         if (loc && !d.address.toLowerCase().includes(loc) && !d.area.toLowerCase().includes(loc)) return false;
         if (maxP && d.priceNum > parseInt(maxP)) return false;
@@ -2125,6 +2201,7 @@ function resetFilters() {
     for (var i = 0; i < selects.length; i++) selects[i].value = '';
     document.getElementById('filterLocation').value = '';
     document.getElementById('filterArea').value = '';
+    document.getElementById('filterSource').value = '';
     document.getElementById('tableSearch').value = '';
     document.getElementById('areaInsights').style.display = 'none';
     tableSearchTerm = '';
