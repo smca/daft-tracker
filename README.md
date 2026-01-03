@@ -48,11 +48,47 @@ When working on this repo:
 4. Test changes by opening index.html locally before pushing
 5. Run `node tests.js` to validate data integrity
 
-Key functions in index.html:
-- `parseCSV()` - normalizes data from both sources
-- `calcDesirability()` - scoring algorithm (lines ~1390)
-- `applyFilters()` - filter logic
-- `renderTable()` - table rendering
+### Code Structure
+
+All code is in `index.html`:
+- Lines 1-900: CSS styles
+- Lines 900-1200: HTML structure
+- Lines 1200+: JavaScript
+
+Key global variables:
+- `allData` - all properties from both sources
+- `filteredData` - properties after filters applied
+- `tableData` - properties after table-specific filters
+- `areaStats` - computed stats per area (avg price, days, demand score)
+
+### Data Flow
+
+1. `loadData()` fetches CSVs and calls `parseCSV()` for each source
+2. `parseCSV()` normalizes fields (priceNum, bedsNum, sizeNum, lat, lng, area)
+3. Area stats computed, then `calcDesirability()` scores each property
+4. `applyFilters()` filters to `filteredData`, updates stats/charts
+5. `renderTable()` renders the table from `tableData`
+
+### Adding a New Filter
+
+1. Add HTML select/input in the filters-row section (~line 1020)
+2. Read the value in `applyFilters()` (~line 2150)
+3. Add filter logic: `if (myFilter && !matchesCondition(d)) return false;`
+4. Add to `saveFilters()`/`loadFilters()` if it should persist
+
+### Adding a Table Column
+
+1. Add `<th>` in the table header (~line 1140)
+2. In `renderTable()`, create a new `<td>` and append to `tr`
+3. Add any CSS classes needed for styling
+
+### CSV Fields Available
+
+Both sources have: listing_id, url, address, price, beds, baths, size_sqm, property_type, ber, latitude, longitude, days_on_market
+
+Computed fields added by parseCSV: priceNum, bedsNum, sizeNum, daysNum, lat, lng, pricePerSqm, area, heatingCost, source
+
+### Scoring Algorithm
 
 The scoring weights are: Area Demand 40%, Value 25%, BER 20%, Property Type 15%.
 
