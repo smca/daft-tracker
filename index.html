@@ -678,6 +678,40 @@
         .source-daft { background: #E3F2FD; color: #1565C0; }
         .source-myhome { background: #E8F5E9; color: #2E7D32; }
 
+        /* Duplicate grouping */
+        .duplicate-badge {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 3px;
+            background: #FFF3E0;
+            color: #E65100;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+        tr.duplicate-row {
+            background: linear-gradient(90deg, rgba(255,152,0,0.06) 0%, transparent 30%);
+        }
+        tr.duplicate-row:hover {
+            background: linear-gradient(90deg, rgba(255,152,0,0.12) 0%, var(--bg) 30%);
+        }
+        tr.duplicate-row td:first-child {
+            border-left: 3px solid #FF9800;
+        }
+        tr.duplicate-row.preferred-area td:first-child {
+            border-left: 3px solid #FF9800;
+            box-shadow: inset 3px 0 0 var(--primary);
+        }
+        .duplicate-group-header {
+            background: #FFF8E1;
+            font-size: 11px;
+            color: #F57C00;
+            padding: 6px 12px;
+            font-weight: 600;
+            border-bottom: 1px solid #FFE0B2;
+        }
+
         /* Score */
         .score-cell {
             display: flex;
@@ -957,6 +991,10 @@
                     <strong id="headerMyhome">-</strong>
                 </div>
                 <div class="header-stat">
+                    <span>Cross-listed</span>
+                    <strong id="headerDuplicates">-</strong>
+                </div>
+                <div class="header-stat">
                     <span>Median</span>
                     <strong id="headerMedian">-</strong>
                 </div>
@@ -985,6 +1023,8 @@
                         <option value="">All sources</option>
                         <option value="daft">Daft.ie only</option>
                         <option value="myhome">MyHome.ie only</option>
+                        <option value="crosslisted">Cross-listed only</option>
+                        <option value="unique">Unique only (no duplicates)</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -1165,7 +1205,7 @@
     </div>
 
 <script>
-let allData = [], filteredData = [], tableData = [], areaStats = {}, globalStats = {};
+let allData = [], filteredData = [], tableData = [], areaStats = {}, globalStats = {}, duplicateGroups = new Map();
 let map, markers, priceChart, areaChart, daysChart;
 let compareList = [];
 let currentSort = { key: 'desirability.score', dir: -1 };
@@ -1312,6 +1352,111 @@ function isPreferredArea(address) {
     return PREFERRED_AREAS.some(area => lower.includes(area));
 }
 
+// Normalize address for duplicate detection
+function normalizeAddress(address) {
+    let norm = address.toLowerCase()
+        // Remove Eircodes (Irish postal codes like D15X3W6, K32NV21)
+        .replace(/[a-z]\d{2}\s*[a-z0-9]{4}/gi, '')
+        // Remove "Co. Dublin", "County Dublin", "Co Dublin"
+        .replace(/co\.?\s*dublin/gi, '')
+        .replace(/county\s*dublin/gi, '')
+        // Remove Dublin postal districts like "Dublin 15", "Dublin 4"
+        .replace(/dublin\s*\d+/gi, '')
+        // Remove common suffixes that vary between sources
+        .replace(/\b(house|road|rd|street|st|avenue|ave|drive|dr|lane|ln|park|gardens|gdn|close|grove|court|terrace|ter|way|place|pl|crescent|cres)\b/gi, '')
+        // Remove apartment/unit prefixes
+        .replace(/\b(apartment|apt|unit|flat|block)\s*[a-z0-9]*/gi, '')
+        // Remove extra whitespace and punctuation
+        .replace(/[,.'"\-]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    return norm;
+}
+
+// Calculate similarity between two normalized addresses (0-1)
+function addressSimilarity(addr1, addr2) {
+    const words1 = addr1.split(' ').filter(w => w.length > 1);
+    const words2 = addr2.split(' ').filter(w => w.length > 1);
+
+    if (words1.length === 0 || words2.length === 0) return 0;
+
+    // Count matching words
+    let matches = 0;
+    for (const w1 of words1) {
+        if (words2.some(w2 => w1 === w2 || (w1.length > 3 && w2.includes(w1)) || (w2.length > 3 && w1.includes(w2)))) {
+            matches++;
+        }
+    }
+
+    // Similarity is the ratio of matches to the smaller word count
+    const minLen = Math.min(words1.length, words2.length);
+    return matches / minLen;
+}
+
+// Detect and group duplicate properties across sources
+function detectDuplicates(data) {
+    const duplicateGroups = new Map(); // groupId -> array of listing_ids
+    let groupIdCounter = 0;
+
+    // Only compare across different sources
+    const daftProperties = data.filter(d => d.source === 'daft');
+    const myhomeProperties = data.filter(d => d.source === 'myhome');
+
+    // Create normalized address cache
+    const normalizedCache = new Map();
+    data.forEach(d => {
+        normalizedCache.set(d.listing_id, normalizeAddress(d.address));
+    });
+
+    // Find duplicates
+    for (const daft of daftProperties) {
+        const daftNorm = normalizedCache.get(daft.listing_id);
+
+        for (const myhome of myhomeProperties) {
+            // Skip if already in a group together
+            if (daft.duplicateGroup && daft.duplicateGroup === myhome.duplicateGroup) continue;
+
+            const myhomeNorm = normalizedCache.get(myhome.listing_id);
+
+            // Check address similarity
+            const similarity = addressSimilarity(daftNorm, myhomeNorm);
+
+            // Require high address similarity AND matching criteria
+            if (similarity >= 0.7) {
+                // Additional checks: price should be within 10% or beds should match
+                const priceDiff = Math.abs(daft.priceNum - myhome.priceNum) / Math.max(daft.priceNum, myhome.priceNum);
+                const bedsMatch = daft.bedsNum === myhome.bedsNum && daft.bedsNum > 0;
+                const berMatch = daft.ber && myhome.ber && daft.ber[0] === myhome.ber[0];
+
+                // Consider a duplicate if address is similar AND (price within 10% OR beds match OR BER matches)
+                if (priceDiff <= 0.1 || bedsMatch || berMatch) {
+                    // Assign to same group
+                    let groupId;
+                    if (daft.duplicateGroup) {
+                        groupId = daft.duplicateGroup;
+                    } else if (myhome.duplicateGroup) {
+                        groupId = myhome.duplicateGroup;
+                    } else {
+                        groupId = ++groupIdCounter;
+                    }
+
+                    daft.duplicateGroup = groupId;
+                    myhome.duplicateGroup = groupId;
+
+                    if (!duplicateGroups.has(groupId)) {
+                        duplicateGroups.set(groupId, []);
+                    }
+                    const group = duplicateGroups.get(groupId);
+                    if (!group.includes(daft.listing_id)) group.push(daft.listing_id);
+                    if (!group.includes(myhome.listing_id)) group.push(myhome.listing_id);
+                }
+            }
+        }
+    }
+
+    return duplicateGroups;
+}
+
 async function loadData() {
     showLoading(true);
     try {
@@ -1336,6 +1481,10 @@ async function loadData() {
 
         // Combine both sources
         allData = [...daftData, ...myhomeData].filter(d => d.priceNum > 0);
+
+        // Detect duplicate properties across sources
+        duplicateGroups = detectDuplicates(allData);
+        console.log('Found', duplicateGroups.size, 'duplicate property groups');
 
     areaStats = {};
     allData.forEach(d => {
@@ -1496,10 +1645,12 @@ function updateStats() {
     // Source counts
     const daftCount = d.filter(x => x.source === 'daft').length;
     const myhomeCount = d.filter(x => x.source === 'myhome').length;
+    const duplicateCount = d.filter(x => x.duplicateGroup !== undefined).length;
 
     document.getElementById('headerTotal').textContent = d.length.toLocaleString();
     document.getElementById('headerDaft').textContent = daftCount.toLocaleString();
     document.getElementById('headerMyhome').textContent = myhomeCount.toLocaleString();
+    document.getElementById('headerDuplicates').textContent = duplicateCount.toLocaleString();
     document.getElementById('totalCount').textContent = allData.length.toLocaleString();
     document.getElementById('filteredCount').textContent = d.length.toLocaleString();
     document.getElementById('headerHot').textContent = hot;
@@ -1872,7 +2023,8 @@ function renderTable() {
 
     sorted.slice(0, 500).forEach(function(d, idx) {
         const tr = document.createElement('tr');
-        tr.className = 'row-' + d.desirability.level + (d.inPreferredArea ? ' preferred-area' : '');
+        const isDuplicate = d.duplicateGroup !== undefined;
+        tr.className = 'row-' + d.desirability.level + (d.inPreferredArea ? ' preferred-area' : '') + (isDuplicate ? ' duplicate-row' : '');
         const des = d.desirability;
         const daysClass = d.daysNum >= 90 ? 'days-old' : d.daysNum <= 7 && d.daysNum > 0 ? 'days-new' : '';
         const berClass = d.ber ? (d.ber[0] <= 'B' ? 'ber-good' : d.ber[0] <= 'C' ? 'ber-ok' : 'ber-bad') : '';
@@ -1915,6 +2067,15 @@ function renderTable() {
         sourceBadge.className = 'source-badge source-' + d.source;
         sourceBadge.textContent = d.source === 'daft' ? 'Daft' : 'MyHome';
         addrDiv.appendChild(sourceBadge);
+
+        // Duplicate badge
+        if (isDuplicate) {
+            const dupBadge = document.createElement('span');
+            dupBadge.className = 'duplicate-badge';
+            dupBadge.textContent = 'CROSS-LISTED';
+            dupBadge.title = 'This property appears on both Daft and MyHome';
+            addrDiv.appendChild(dupBadge);
+        }
 
         if (d.badges.length > 0) {
             const badgeRow = document.createElement('div');
@@ -2156,7 +2317,10 @@ function applyFilters() {
         const ber = document.getElementById('filterBer').value;
         const des = document.getElementById('filterDesire').value;
 
-        if (sourceFilter && d.source !== sourceFilter) return false;
+        // Source filter with cross-listed/unique options
+        if (sourceFilter === 'crosslisted' && d.duplicateGroup === undefined) return false;
+        if (sourceFilter === 'unique' && d.duplicateGroup !== undefined) return false;
+        if (sourceFilter && sourceFilter !== 'crosslisted' && sourceFilter !== 'unique' && d.source !== sourceFilter) return false;
         if (areaFilter === 'preferred' && !isPreferredArea(d.address)) return false;
         if (loc && !d.address.toLowerCase().includes(loc) && !d.area.toLowerCase().includes(loc)) return false;
         if (maxP && d.priceNum > parseInt(maxP)) return false;
