@@ -36,7 +36,30 @@ npx serve .
 node tests.js
 ```
 
-Validates data integrity, price formats, URLs, and HTML structure.
+### What's Tested
+
+- **Data Integrity** - CSVs have data, required fields present
+- **Price Validation** - prices parseable, no corrupted ranges
+- **URL Validation** - all links point to correct domains
+- **Uniqueness** - no duplicate listing IDs per source
+- **HTML Validation** - key elements and CSS classes exist
+
+### Adding Tests
+
+Tests use a simple `test(name, fn)` pattern:
+
+```js
+test('My new feature works', () => {
+    assert(someCondition, 'Error message if false');
+    assertEqual(actual, expected, 'Values should match');
+});
+```
+
+When to add tests:
+- New filter: test the HTML element exists
+- New data field: test it's present in CSV and parsed correctly
+- New computed field: test the calculation logic
+- New UI element: test the HTML/CSS is present
 
 ## For Claude Code Collaborators
 
