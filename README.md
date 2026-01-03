@@ -129,6 +129,7 @@ Note: Asking prices in Dublin typically sell 7-8% above listed price based on 20
 - Can't push directly to main - always use feature branches
 - Rebase onto main if your branch falls behind: `git rebase origin/main`
 - Run `node tests.js` before committing
+- Create PRs with `gh pr create` - include a summary and test plan
 
 **Common tasks:**
 - "Add a filter" → see Adding a New Filter section above
