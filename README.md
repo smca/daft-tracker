@@ -116,3 +116,32 @@ Computed fields added by parseCSV: priceNum, bedsNum, sizeNum, daysNum, lat, lng
 The scoring weights are: Area Demand 40%, Value 25%, BER 20%, Property Type 15%.
 
 Note: Asking prices in Dublin typically sell 7-8% above listed price based on 2025 market data.
+
+### Claude Code Tips
+
+**Working with the single-file architecture:**
+- The file is ~2200 lines. Use line number references when discussing changes.
+- Read specific sections with offset/limit rather than the whole file.
+- CSS, HTML, and JS are all in one file - be careful with large edits.
+
+**Security rules:**
+- Never use `innerHTML` with user/CSV data. Use `textContent` or `createElement`.
+- Use `escapeHtml()` if you must build HTML strings.
+- CDN resources need SRI integrity hashes.
+
+**Git workflow:**
+- Branch naming: `claude/<description>-<session-id>` (the session ID is provided)
+- Can't push directly to main - always use feature branches
+- Rebase onto main if your branch falls behind: `git rebase origin/main`
+- Run `node tests.js` before committing
+
+**Common tasks:**
+- "Add a filter" → see Adding a New Filter section above
+- "Add a column" → see Adding a Table Column section above
+- "Change scoring" → edit `calcDesirability()` around line 1430
+- "Fix a bug" → check browser console, search for relevant function
+
+**If stuck:**
+- Check `git status` and `git log` to understand current state
+- The app has no build step - just open index.html in browser to test
+- All state is in global variables (allData, filteredData, etc.)
