@@ -124,7 +124,6 @@
         }
         .insight-chip.hot { border-color: var(--secondary); background: var(--secondary-light); color: var(--secondary); }
         .insight-chip.warn { border-color: var(--accent); background: var(--accent-light); color: #9A7340; }
-        .insight-chip.new { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
 
         /* Filters Card */
         .filters-card {
@@ -1528,14 +1527,6 @@ function genInsights() {
         const chip = document.createElement('div');
         chip.className = 'insight-chip hot';
         chip.textContent = 'Hottest: ' + topAreas.join(', ');
-        c.appendChild(chip);
-    }
-
-    const newL = filteredData.filter(x => x.daysNum > 0 && x.daysNum <= 7).length;
-    if (newL) {
-        const chip = document.createElement('div');
-        chip.className = 'insight-chip new';
-        chip.textContent = newL + ' new this week';
         c.appendChild(chip);
     }
 
