@@ -1316,8 +1316,8 @@ async function loadData() {
     try {
         // Load both data sources in parallel
         const [daftResponse, myhomeResponse] = await Promise.all([
-            fetch('dublin_houses.csv'),
-            fetch('myhome_dublin.csv').catch(() => null)
+            fetch('daft_listings.csv'),
+            fetch('myhome_listings.csv').catch(() => null)
         ]);
 
         if (!daftResponse.ok) throw new Error('Failed to load Daft data');
@@ -1513,7 +1513,7 @@ function updateStats() {
     }
     if (pps.length) {
         const avgPPS = Math.round(pps.reduce((a,b) => a+b, 0) / pps.length);
-        document.getElementById('statPPS').textContent = avgPPS.toLocaleString();
+        document.getElementById('statPPS').textContent = '€' + avgPPS.toLocaleString();
     }
     if (days.length) {
         document.getElementById('statDays').textContent = Math.round(days.reduce((a,b)=>a+b,0)/days.length) + ' days';
@@ -1564,7 +1564,7 @@ function genInsights() {
 
 function formatPrice(num) {
     if (num >= 1000000) return (num / 1000000).toFixed(1).replace('.0', '') + 'M';
-    return Math.round(num / 1000) + 'k';
+    return '€' + Math.round(num / 1000) + 'k';
 }
 
 // Escape HTML entities to prevent XSS when inserting text into HTML strings

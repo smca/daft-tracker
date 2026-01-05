@@ -6,8 +6,8 @@ Live site: https://smca.github.io/daft-tracker/
 
 ## Data
 
-- `dublin_houses.csv` - Daft.ie listings
-- `myhome_dublin.csv` - MyHome.ie listings
+- `daft_listings.csv` - Daft.ie listings
+- `myhome_listings.csv` - MyHome.ie listings
 
 Data is loaded client-side. Source filter defaults to Daft.
 
