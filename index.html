@@ -124,7 +124,6 @@
         }
         .insight-chip.hot { border-color: var(--secondary); background: var(--secondary-light); color: var(--secondary); }
         .insight-chip.warn { border-color: var(--accent); background: var(--accent-light); color: #9A7340; }
-        .insight-chip.new { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
 
         /* Filters Card */
         .filters-card {
@@ -948,11 +947,11 @@
                     <span>Properties</span>
                     <strong id="headerTotal">-</strong>
                 </div>
-                <div class="header-stat">
+                <div class="header-stat" id="statDaft">
                     <span>Daft</span>
                     <strong id="headerDaft">-</strong>
                 </div>
-                <div class="header-stat">
+                <div class="header-stat" id="statMyhome">
                     <span>MyHome</span>
                     <strong id="headerMyhome">-</strong>
                 </div>
@@ -1405,7 +1404,7 @@ function calcDesirability(d) {
     const berScores = { A: 100, B: 80, C: 60, D: 40, E: 25, F: 15, G: 10 };
     const berScore = d.ber ? (berScores[d.ber[0]] || 30) : 30;
     score += berScore * 0.20;
-    breakdown.ber = { value: berScore, weight: 20, label: 'Energy Efficiency', desc: d.ber ? 'BER ' + d.ber + ' = ~' + d.heatingCost + '/yr heating' : 'No BER rating' };
+    breakdown.ber = { value: berScore, weight: 20, label: 'Energy Efficiency', desc: d.ber ? 'BER ' + d.ber + ' = ~€' + d.heatingCost + '/yr heating' : 'No BER rating' };
 
     const typeScores = { Detached: 100, 'Semi-D': 85, Semi: 85, Bungalow: 80, Terrace: 70, End: 75 };
     let typeScore = 60;
@@ -1491,6 +1490,11 @@ function updateStats() {
     const myhomeCount = d.filter(x => x.source === 'myhome').length;
 
     document.getElementById('headerTotal').textContent = d.length.toLocaleString();
+
+    // Hide source stats when that source is filtered out
+    const sourceFilter = document.getElementById('filterSource').value;
+    document.getElementById('statDaft').style.display = sourceFilter === 'myhome' ? 'none' : '';
+    document.getElementById('statMyhome').style.display = sourceFilter === 'daft' ? 'none' : '';
     document.getElementById('headerDaft').textContent = daftCount.toLocaleString();
     document.getElementById('headerMyhome').textContent = myhomeCount.toLocaleString();
     document.getElementById('totalCount').textContent = allData.length.toLocaleString();
@@ -1528,14 +1532,6 @@ function genInsights() {
         const chip = document.createElement('div');
         chip.className = 'insight-chip hot';
         chip.textContent = 'Hottest: ' + topAreas.join(', ');
-        c.appendChild(chip);
-    }
-
-    const newL = filteredData.filter(x => x.daysNum > 0 && x.daysNum <= 7).length;
-    if (newL) {
-        const chip = document.createElement('div');
-        chip.className = 'insight-chip new';
-        chip.textContent = newL + ' new this week';
         c.appendChild(chip);
     }
 
@@ -2015,7 +2011,7 @@ function renderTable() {
             const costSpan = document.createElement('span');
             const costClass = d.heatingSaving > 0 ? 'good' : d.heatingSaving < -500 ? 'bad' : '';
             costSpan.className = 'running-cost ' + costClass;
-            costSpan.textContent = '~' + d.heatingCost + '/yr' + (d.heatingSaving > 0 ? ' (save ' + d.heatingSaving + ')' : '');
+            costSpan.textContent = '~€' + d.heatingCost + '/yr' + (d.heatingSaving > 0 ? ' (save €' + d.heatingSaving + ')' : '');
             td8.appendChild(document.createElement('br'));
             td8.appendChild(costSpan);
         }
@@ -2151,7 +2147,7 @@ function updateComparePanel() {
                     ['Size', d.beds + ' bed - ' + (d.size_sqm || '?') + 'm2'],
                     ['BER', d.ber || '-'],
                     ['Score', d.desirability.score + '/100'],
-                    ['Heating', '~' + d.heatingCost + '/yr']
+                    ['Heating', '~€' + d.heatingCost + '/yr']
                 ];
 
                 details.forEach(function(detail) {
