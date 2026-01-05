@@ -18,8 +18,9 @@ from playwright.sync_api import sync_playwright
 
 BASE_URL = "https://www.myhome.ie"
 SEARCH_URL = "https://www.myhome.ie/residential/dublin/property-for-sale"
-OUTPUT_CSV = str(Path.home() / "code/myhome_dublin.csv")
-OUTPUT_JSON = str(Path.home() / "code/myhome_dublin.json")
+SCRIPT_DIR = Path(__file__).parent.parent
+OUTPUT_CSV = str(SCRIPT_DIR / "data/myhome_listings.csv")
+OUTPUT_JSON = str(SCRIPT_DIR / "data/myhome_listings.json")
 
 # User agents
 USER_AGENTS = [

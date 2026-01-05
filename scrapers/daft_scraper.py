@@ -31,8 +31,9 @@ CHROME_USER_DATA = str(Path.home() / "Library/Application Support/Google/Chrome"
 from playwright.sync_api import sync_playwright
 
 BASE_URL = "https://www.daft.ie"
-OUTPUT_CSV = str(Path.home() / "code/dublin_houses.csv")
-OUTPUT_JSON = str(Path.home() / "code/dublin_houses.json")
+SCRIPT_DIR = Path(__file__).parent.parent
+OUTPUT_CSV = str(SCRIPT_DIR / "data/daft_listings.csv")
+OUTPUT_JSON = str(SCRIPT_DIR / "data/daft_listings.json")
 
 # Split by price ranges to bypass 1000 result limit
 SEARCH_URLS = [

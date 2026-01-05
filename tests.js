@@ -60,8 +60,8 @@ console.log('\n=== Dublin Home Finder Tests ===\n');
 // --- Data Integrity Tests ---
 console.log('--- Data Integrity ---');
 
-const daftData = loadCSV('daft_listings.csv');
-const myhomeData = loadCSV('myhome_listings.csv');
+const daftData = loadCSV('data/daft_listings.csv');
+const myhomeData = loadCSV('data/myhome_listings.csv');
 
 test('Daft CSV has data', () => {
     assert(daftData.length > 0, 'Daft CSV is empty');
@@ -173,8 +173,8 @@ test('HTML includes source filter', () => {
 });
 
 test('HTML includes both CSV fetches', () => {
-    assert(html.includes('daft_listings.csv'), 'Missing Daft CSV fetch');
-    assert(html.includes('myhome_listings.csv'), 'Missing MyHome CSV fetch');
+    assert(html.includes('data/daft_listings.csv'), 'Missing Daft CSV fetch');
+    assert(html.includes('data/myhome_listings.csv'), 'Missing MyHome CSV fetch');
 });
 
 test('HTML includes source badges CSS', () => {

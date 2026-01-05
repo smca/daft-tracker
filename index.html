@@ -1315,8 +1315,8 @@ async function loadData() {
     try {
         // Load both data sources in parallel
         const [daftResponse, myhomeResponse] = await Promise.all([
-            fetch('daft_listings.csv'),
-            fetch('myhome_listings.csv').catch(() => null)
+            fetch('data/daft_listings.csv'),
+            fetch('data/myhome_listings.csv').catch(() => null)
         ]);
 
         if (!daftResponse.ok) throw new Error('Failed to load Daft data');
