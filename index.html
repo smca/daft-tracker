@@ -1404,7 +1404,7 @@ function calcDesirability(d) {
     const berScores = { A: 100, B: 80, C: 60, D: 40, E: 25, F: 15, G: 10 };
     const berScore = d.ber ? (berScores[d.ber[0]] || 30) : 30;
     score += berScore * 0.20;
-    breakdown.ber = { value: berScore, weight: 20, label: 'Energy Efficiency', desc: d.ber ? 'BER ' + d.ber + ' = ~' + d.heatingCost + '/yr heating' : 'No BER rating' };
+    breakdown.ber = { value: berScore, weight: 20, label: 'Energy Efficiency', desc: d.ber ? 'BER ' + d.ber + ' = ~€' + d.heatingCost + '/yr heating' : 'No BER rating' };
 
     const typeScores = { Detached: 100, 'Semi-D': 85, Semi: 85, Bungalow: 80, Terrace: 70, End: 75 };
     let typeScore = 60;
@@ -2006,7 +2006,7 @@ function renderTable() {
             const costSpan = document.createElement('span');
             const costClass = d.heatingSaving > 0 ? 'good' : d.heatingSaving < -500 ? 'bad' : '';
             costSpan.className = 'running-cost ' + costClass;
-            costSpan.textContent = '~' + d.heatingCost + '/yr' + (d.heatingSaving > 0 ? ' (save ' + d.heatingSaving + ')' : '');
+            costSpan.textContent = '~€' + d.heatingCost + '/yr' + (d.heatingSaving > 0 ? ' (save €' + d.heatingSaving + ')' : '');
             td8.appendChild(document.createElement('br'));
             td8.appendChild(costSpan);
         }
@@ -2142,7 +2142,7 @@ function updateComparePanel() {
                     ['Size', d.beds + ' bed - ' + (d.size_sqm || '?') + 'm2'],
                     ['BER', d.ber || '-'],
                     ['Score', d.desirability.score + '/100'],
-                    ['Heating', '~' + d.heatingCost + '/yr']
+                    ['Heating', '~€' + d.heatingCost + '/yr']
                 ];
 
                 details.forEach(function(detail) {
