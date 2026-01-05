@@ -947,11 +947,11 @@
                     <span>Properties</span>
                     <strong id="headerTotal">-</strong>
                 </div>
-                <div class="header-stat">
+                <div class="header-stat" id="statDaft">
                     <span>Daft</span>
                     <strong id="headerDaft">-</strong>
                 </div>
-                <div class="header-stat">
+                <div class="header-stat" id="statMyhome">
                     <span>MyHome</span>
                     <strong id="headerMyhome">-</strong>
                 </div>
@@ -1490,6 +1490,11 @@ function updateStats() {
     const myhomeCount = d.filter(x => x.source === 'myhome').length;
 
     document.getElementById('headerTotal').textContent = d.length.toLocaleString();
+
+    // Hide source stats when that source is filtered out
+    const sourceFilter = document.getElementById('filterSource').value;
+    document.getElementById('statDaft').style.display = sourceFilter === 'myhome' ? 'none' : '';
+    document.getElementById('statMyhome').style.display = sourceFilter === 'daft' ? 'none' : '';
     document.getElementById('headerDaft').textContent = daftCount.toLocaleString();
     document.getElementById('headerMyhome').textContent = myhomeCount.toLocaleString();
     document.getElementById('totalCount').textContent = allData.length.toLocaleString();
