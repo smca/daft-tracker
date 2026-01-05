@@ -1122,7 +1122,6 @@
                     <button class="filter-tab" data-filter="top" data-tip="High score based on area demand, value, energy rating, and property type">Score 70+</button>
                     <button class="filter-tab" data-filter="starter" data-tip="Under 500k, 3+ beds, BER C or better, 80m2+">Starter homes</button>
                     <button class="filter-tab" data-filter="negotiable" data-tip="Listed 90+ days - sellers may accept lower offers">Negotiable</button>
-                    <button class="filter-tab" data-filter="new" data-tip="Listed in the last 14 days">New listings</button>
                 </div>
                 <div class="table-search">
                     <input type="text" id="tableSearch" placeholder="Search address...">
@@ -1427,11 +1426,6 @@ function calcBadges(d) {
     // Under 500k, 3+ bed, good BER, decent size - ideal starter home
     if (d.priceNum <= 500000 && d.bedsNum >= 3 && d.ber && 'ABC'.includes(d.ber[0]) && d.sizeNum >= 80) {
         badges.push({ type: 'ftb', label: 'Starter home' });
-    }
-
-    // Just listed and priced below area average
-    if (d.daysNum > 0 && d.daysNum <= 14 && area.avgPPS && d.pricePerSqm < area.avgPPS * 0.95) {
-        badges.push({ type: 'fast', label: 'Just listed' });
     }
 
     // Been on market a while - room to negotiate
@@ -1873,8 +1867,7 @@ function updateFilterCounts() {
         all: filteredData.length,
         top: filteredData.filter(function(d) { return d.desirability.score >= 70; }).length,
         starter: filteredData.filter(function(d) { return d.badges.some(function(b) { return b.type === 'ftb'; }); }).length,
-        negotiable: filteredData.filter(function(d) { return d.daysNum >= 90; }).length,
-        new: filteredData.filter(function(d) { return d.daysNum > 0 && d.daysNum <= 14; }).length
+        negotiable: filteredData.filter(function(d) { return d.daysNum >= 90; }).length
     };
 
     document.querySelectorAll('.filter-tab').forEach(function(tab) {
@@ -1895,7 +1888,6 @@ function applyTableFilters() {
         if (currentTableFilter === 'top' && d.desirability.score < 70) return false;
         if (currentTableFilter === 'starter' && !d.badges.some(function(b) { return b.type === 'ftb'; })) return false;
         if (currentTableFilter === 'negotiable' && d.daysNum < 90) return false;
-        if (currentTableFilter === 'new' && (d.daysNum <= 0 || d.daysNum > 14)) return false;
 
         // Apply search
         if (tableSearchTerm && !d.address.toLowerCase().includes(tableSearchTerm)) return false;
