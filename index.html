@@ -1279,8 +1279,21 @@ function parseCSV(text, source) {
         obj.bedsNum = parseInt(obj.beds) || 0;
         obj.sizeNum = parseFloat(obj.size_sqm) || 0;
         obj.daysNum = parseInt(obj.days_on_market) || 0;
-        obj.lat = parseFloat(obj.latitude) || 0;
-        obj.lng = parseFloat(obj.longitude) || 0;
+        // For myhome listings, use BrochureMap coordinates if Location coordinates are 0 or empty
+        if (source === 'myhome') {
+            const lat = parseFloat(obj.latitude) || 0;
+            const lng = parseFloat(obj.longitude) || 0;
+            if (lat === 0 && lng === 0) {
+                obj.lat = parseFloat(obj.brochure_latitude) || 0;
+                obj.lng = parseFloat(obj.brochure_longitude) || 0;
+            } else {
+                obj.lat = lat;
+                obj.lng = lng;
+            }
+        } else {
+            obj.lat = parseFloat(obj.latitude) || 0;
+            obj.lng = parseFloat(obj.longitude) || 0;
+        }
         obj.pricePerSqm = obj.sizeNum > 0 ? Math.round(obj.priceNum / obj.sizeNum) : 0;
         obj.area = extractArea(obj.address);
         obj.heatingCost = obj.ber ? (BER_COSTS[obj.ber[0]] || 2200) : 2200;

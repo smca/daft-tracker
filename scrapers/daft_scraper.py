@@ -136,6 +136,7 @@ def main():
 
     all_listings = []
     start_time = time.time()
+    scrape_timestamp = datetime.now().isoformat()
 
     with sync_playwright() as p:
         print("\nLaunching Chrome with your profile...")
@@ -269,7 +270,11 @@ def main():
         print(f"✓ CSV: {OUTPUT_CSV}")
 
         with open(OUTPUT_JSON, 'w', encoding='utf-8') as f:
-            json.dump(unique_listings, f, indent=2, ensure_ascii=False)
+            output_data = {
+                'scraped_at': scrape_timestamp,
+                'listings': unique_listings
+            }
+            json.dump(output_data, f, indent=2, ensure_ascii=False)
         print(f"✓ JSON: {OUTPUT_JSON}")
 
         # Clean up partial file

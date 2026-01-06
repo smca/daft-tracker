@@ -98,6 +98,14 @@ def extract_listings_from_page(page, page_num):
                 lat = ''
                 lng = ''
 
+            # Get BrochureMap coordinates as fallback
+            brochure_map = item.get('BrochureMap', {}) or {}
+            brochure_lat = brochure_map.get('latitude', 0) if brochure_map else 0
+            brochure_lng = brochure_map.get('longitude', 0) if brochure_map else 0
+            if brochure_lat == 0 and brochure_lng == 0:
+                brochure_lat = ''
+                brochure_lng = ''
+
             # Build URL
             brochure_url = item.get('BrochureUrl', '')
             if brochure_url and not brochure_url.startswith('http'):
@@ -117,6 +125,8 @@ def extract_listings_from_page(page, page_num):
                 'ber': item.get('BerRating', ''),
                 'latitude': str(lat) if lat else '',
                 'longitude': str(lng) if lng else '',
+                'brochure_latitude': str(brochure_lat) if brochure_lat else '',
+                'brochure_longitude': str(brochure_lng) if brochure_lng else '',
                 'date_listed': date_listed,
                 'days_on_market': str(days_on_market) if days_on_market != '' else '',
                 'agent': item.get('GroupName', ''),
@@ -140,6 +150,7 @@ def main():
 
     all_listings = []
     start_time = time.time()
+    scrape_timestamp = datetime.now().isoformat()
 
     with sync_playwright() as p:
         print("\nLaunching Chrome with your profile...")
@@ -248,7 +259,11 @@ def main():
         print(f"✓ CSV: {OUTPUT_CSV}")
 
         with open(OUTPUT_JSON, 'w', encoding='utf-8') as f:
-            json.dump(unique_listings, f, indent=2, ensure_ascii=False)
+            output_data = {
+                'scraped_at': scrape_timestamp,
+                'listings': unique_listings
+            }
+            json.dump(output_data, f, indent=2, ensure_ascii=False)
         print(f"✓ JSON: {OUTPUT_JSON}")
 
         # Quick stats
