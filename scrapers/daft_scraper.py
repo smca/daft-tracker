@@ -34,6 +34,7 @@ BASE_URL = "https://www.daft.ie"
 SCRIPT_DIR = Path(__file__).parent.parent
 OUTPUT_CSV = str(SCRIPT_DIR / "data/daft_listings.csv")
 OUTPUT_JSON = str(SCRIPT_DIR / "data/daft_listings.json")
+TIMESTAMP_FILE = str(SCRIPT_DIR / "data/daft_scrape_timestamp.txt")
 
 # Split by price ranges to bypass 1000 result limit
 SEARCH_URLS = [
@@ -276,6 +277,11 @@ def main():
             }
             json.dump(output_data, f, indent=2, ensure_ascii=False)
         print(f"✓ JSON: {OUTPUT_JSON}")
+
+        # Save timestamp
+        with open(TIMESTAMP_FILE, 'w', encoding='utf-8') as f:
+            f.write(scrape_timestamp)
+        print(f"✓ Timestamp: {TIMESTAMP_FILE}")
 
         # Clean up partial file
         partial_file = OUTPUT_JSON + '.partial'

@@ -21,13 +21,13 @@ SEARCH_URL = "https://www.myhome.ie/residential/dublin/property-for-sale"
 SCRIPT_DIR = Path(__file__).parent.parent
 OUTPUT_CSV = str(SCRIPT_DIR / "data/myhome_listings.csv")
 OUTPUT_JSON = str(SCRIPT_DIR / "data/myhome_listings.json")
+TIMESTAMP_FILE = str(SCRIPT_DIR / "data/myhome_scrape_timestamp.txt")
 
 # User agents
 USER_AGENTS = [
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15',
 ]
-
 
 def extract_listings_from_page(page, page_num):
     """Extract listings from ng-state JSON"""
@@ -66,6 +66,13 @@ def extract_listings_from_page(page, page_num):
 
         listings = []
         for item in results:
+
+            # Skip apartments
+            property_type = item.get('PropertyType', '')
+            if property_type.lower() == 'apartment':
+                # print(f"\nSkipping apartment")
+                continue
+
             # Parse price - handle ranges like "€1,275,000 to €1,350,000"
             price_str = item.get('PriceAsString', '')
             price_num = 0
@@ -121,7 +128,7 @@ def extract_listings_from_page(page, page_num):
                 'beds': item.get('NumberOfBeds', ''),
                 'baths': item.get('NumberOfBathrooms', ''),
                 'size_sqm': item.get('SizeStringMeters', ''),
-                'property_type': item.get('PropertyType', ''),
+                'property_type': property_type,
                 'ber': item.get('BerRating', ''),
                 'latitude': str(lat) if lat else '',
                 'longitude': str(lng) if lng else '',
@@ -265,6 +272,11 @@ def main():
             }
             json.dump(output_data, f, indent=2, ensure_ascii=False)
         print(f"✓ JSON: {OUTPUT_JSON}")
+
+        # Save timestamp
+        with open(TIMESTAMP_FILE, 'w', encoding='utf-8') as f:
+            f.write(scrape_timestamp)
+        print(f"✓ Timestamp: {TIMESTAMP_FILE}")
 
         # Quick stats
         prices = [l['price_num'] for l in unique_listings if l['price_num'] > 0]
