@@ -1740,7 +1740,7 @@ function updateMapMarkers() {
     }
     filteredData.forEach(d => {
         if (d.lat && d.lng) {
-            const colors = { hot: '#6B9080', warm: '#E0A458', cool: '#A8A097' };
+            const colors = { hot: '#EF4444', warm: '#F97316', cool: '#3B82F6' };
             const m = L.circleMarker([d.lat, d.lng], {
                 radius: 6,
                 fillColor: colors[d.desirability.level],
