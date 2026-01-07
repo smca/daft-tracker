@@ -67,10 +67,9 @@ def extract_listings_from_page(page, page_num):
         listings = []
         for item in results:
 
-            # Skip apartments
+            # Skip apartments (Daft scraper only fetches houses via URL filter)
             property_type = item.get('PropertyType', '')
             if property_type.lower() == 'apartment':
-                # print(f"\nSkipping apartment")
                 continue
 
             # Parse price - handle ranges like "€1,275,000 to €1,350,000"

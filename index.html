@@ -2371,14 +2371,6 @@ document.getElementById('filterLocation').addEventListener('input', function() {
     filterTimeout = setTimeout(applyFilters, 300);
 });
 
-// Update timestamp when source selection changes
-const filterSourceEl = document.getElementById('filterSource');
-if (filterSourceEl) {
-    filterSourceEl.addEventListener('change', function() {
-        updateTimestampDisplay();
-    });
-}
-
 // Table filter tabs with tooltips
 document.querySelectorAll('.filter-tab').forEach(function(tab) {
     // Store original label
