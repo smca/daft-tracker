@@ -150,14 +150,14 @@ def main():
             context = p.chromium.launch_persistent_context(
                 user_data_dir=CHROME_USER_DATA + "/Default",
                 channel='chrome',  # Use installed Chrome
-                headless=False,    # Visible - helps with Cloudflare
+                headless=True,    # Visible - helps with Cloudflare
                 user_agent=user_agent,
                 args=['--disable-blink-features=AutomationControlled'],
             )
             print("✓ Using your Chrome profile")
         except:
             # Fallback to fresh browser
-            browser = p.chromium.launch(headless=False)
+            browser = p.chromium.launch(headless=True)
             context = browser.new_context(user_agent=user_agent)
             print("⚠ Using fresh browser (might get Cloudflare'd)")
 

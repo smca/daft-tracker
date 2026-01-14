@@ -167,14 +167,14 @@ def main():
             context = p.chromium.launch_persistent_context(
                 user_data_dir=CHROME_USER_DATA + "/Default",
                 channel='chrome',
-                headless=False,
+                headless=True,
                 user_agent=user_agent,
                 args=['--disable-blink-features=AutomationControlled'],
             )
             print("✓ Using your Chrome profile")
         except Exception as e:
             print(f"Could not use Chrome profile: {e}")
-            browser = p.chromium.launch(headless=False)
+            browser = p.chromium.launch(headless=True)
             context = browser.new_context(user_agent=user_agent)
             print("⚠ Using fresh browser")
 
