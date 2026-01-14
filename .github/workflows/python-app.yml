@@ -28,7 +28,7 @@ jobs:
         pip install playwright
         playwright install chromium
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Test with pytest
+    - name: Run the daft.ie scraper
       run: |
         python scrapers/daft_scraper.py
         
