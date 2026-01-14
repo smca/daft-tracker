@@ -3,8 +3,7 @@
 name: run Python scrapers
 
 on:
-  repository_dispatch:
-    types: [run-scrapers]
+  workflow_dispatch:  # Allows manual trigger from GitHub Actions UI
 #  schedule:
 #    - cron: '0 10 * * 1' # run every Monday at 10:00 AM
 #  push:
