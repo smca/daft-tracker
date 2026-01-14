@@ -9,7 +9,7 @@ on:
     branches: [ "main" ]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -18,6 +18,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
@@ -31,4 +33,21 @@ jobs:
     - name: Run the daft.ie scraper
       run: |
         python scrapers/daft_scraper.py
+    - name: Run the myhome.ie scraper
+      run: |
+        python scrapers/myhome_scraper.py
+    - name: Configure git
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+    - name: Commit and push changes
+      run: |
+        git add data/daft_listings.csv data/daft_listings.json data/daft_scrape_timestamp.txt
+        git add data/myhome_listings.csv data/myhome_listings.json data/myhome_scrape_timestamp.txt
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Update data from scraper run [$(date +'%Y-%m-%d %H:%M:%S')]"
+          git push
+        fi
         
