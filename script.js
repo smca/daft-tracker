@@ -783,6 +783,15 @@ function updateFilterCounts() {
 }
 
 function applyTableFilters() {
+    // Ensure filteredData exists and is an array
+    if (!filteredData || !Array.isArray(filteredData)) {
+        console.error('filteredData is not available');
+        tableData = [];
+        renderTable();
+        return;
+    }
+    
+    // Filter filteredData into tableData based on table-level filters
     tableData = filteredData.filter(function(d) {
         // Apply table-level filter
         if (currentTableFilter === 'top' && d.desirability.score < 70) return false;
@@ -801,7 +810,15 @@ function applyTableFilters() {
 
 function renderTable() {
     const tbody = document.getElementById('tableBody');
-    tbody.textContent = '';
+    if (!tbody) {
+        console.error('Table body element not found');
+        return;
+    }
+    
+    // Explicitly clear the table body to ensure fresh render
+    while (tbody.firstChild) {
+        tbody.removeChild(tbody.firstChild);
+    }
 
     if (tableData.length === 0) {
         showEmptyState(true);
@@ -1131,7 +1148,10 @@ function applyFilters() {
     genInsights();
     updateMapMarkers();
     initCharts();
+    
+    // Ensure table is updated with filtered results
     applyTableFilters();
+    
     cleanupCompareList();
     saveFilters();
 }
