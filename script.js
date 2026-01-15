@@ -1258,4 +1258,75 @@ document.getElementById('tableSearch').addEventListener('input', function(e) {
     }, 200);
 });
 
+function exportToExcel() {
+    // Check if XLSX library is loaded
+    if (typeof XLSX === 'undefined') {
+        alert('Excel export library is not loaded. Please refresh the page and try again.');
+        console.error('XLSX library not available');
+        return;
+    }
+
+    if (!tableData || tableData.length === 0) {
+        alert('No properties to export');
+        return;
+    }
+
+    // Prepare data for Excel export
+    const excelData = tableData.map(function(d) {
+        return {
+            'Property Address': d.address || '',
+            'Price': d.price || '',
+            'Price per m²': d.pricePerSqm ? '€' + d.pricePerSqm.toLocaleString() : '',
+            'Bedrooms': d.bedsNum || '',
+            'Size (m²)': d.sizeNum || '',
+            'BER Rating': d.ber || '',
+            'Days Listed': d.daysNum || '',
+            'Property Link': d.url || ''
+        };
+    });
+
+    // Create workbook and worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    // Convert Property Link column to clickable hyperlinks
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    const linkColIndex = 7; // Property Link is the 8th column (0-indexed: 7)
+    
+    for (let row = 1; row <= range.e.r; row++) { // Start from row 1 (skip header)
+        const cellAddress = XLSX.utils.encode_cell({ r: row, c: linkColIndex });
+        const cell = ws[cellAddress];
+        if (cell && cell.v && cell.v.trim() !== '') {
+            const url = cell.v;
+            // Create hyperlink - Excel format requires the l property with Target
+            cell.l = { Target: url };
+            // Optionally set display text (you can customize this)
+            // cell.v = 'View Property'; // Uncomment to show custom text instead of URL
+        }
+    }
+
+    // Set column widths
+    const colWidths = [
+        { wch: 40 }, // Property Address
+        { wch: 15 }, // Price
+        { wch: 15 }, // Price per m²
+        { wch: 10 }, // Bedrooms
+        { wch: 12 }, // Size (m²)
+        { wch: 12 }, // BER Rating
+        { wch: 12 }, // Days Listed
+        { wch: 50 }  // Property Link
+    ];
+    ws['!cols'] = colWidths;
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Properties');
+
+    // Generate filename with current date
+    const dateStr = new Date().toISOString().split('T')[0];
+    const filename = 'dublin-properties-' + dateStr + '.xlsx';
+
+    // Write file
+    XLSX.writeFile(wb, filename);
+}
+
 loadData();
