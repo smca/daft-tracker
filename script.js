@@ -1266,12 +1266,17 @@ function exportToExcel() {
         return;
     }
 
+    // Export all listings from tableData (what's shown in properties list)
+    // Note: tableData is already filtered by table-level filters and search
+    // The table display is limited to 500 rows, but we export ALL of tableData
     if (!tableData || tableData.length === 0) {
         alert('No properties to export');
         return;
     }
 
-    // Prepare data for Excel export
+    console.log('Exporting ' + tableData.length + ' properties to Excel (table shows up to 500)');
+
+    // Prepare data for Excel export - export ALL listings in tableData, not just the 500 displayed
     const excelData = tableData.map(function(d) {
         return {
             'Property Address': d.address || '',
