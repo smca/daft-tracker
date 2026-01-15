@@ -190,7 +190,7 @@
         <div class="table-card">
             <div class="card-header">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <h3>All Properties</h3>
+                <h3>All Properties</h3>
                     <button class="btn" onclick="exportToExcel()" style="font-size: 12px; padding: 6px 12px;">Export to Excel</button>
                 </div>
                 <span class="card-badge" id="compareHint">Select up to 3 to compare</span>
@@ -214,6 +214,7 @@
                             <th data-sort="desirability.score" onclick="sortTable('desirability.score')">Score</th>
                             <th data-sort="address" onclick="sortTable('address')">Property</th>
                             <th data-sort="priceNum" onclick="sortTable('priceNum')">Price</th>
+                            <th data-sort="date_listed" onclick="sortTable('date_listed')">Date listed</th>
                             <th data-sort="pricePerSqm" onclick="sortTable('pricePerSqm')">Per m2</th>
                             <th data-sort="bedsNum" onclick="sortTable('bedsNum')">Beds</th>
                             <th data-sort="sizeNum" onclick="sortTable('sizeNum')">Size</th>
@@ -242,11 +243,11 @@
     </div>
 
     <script src="script.js"></script>
-    <script>
+<script>
         // Ensure XLSX is loaded before using it
         if (typeof XLSX === 'undefined') {
             console.error('XLSX library failed to load');
         }
-    </script>
+</script>
 </body>
 </html>

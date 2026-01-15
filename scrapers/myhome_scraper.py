@@ -92,8 +92,16 @@ def extract_listings_from_page(page, page_num):
                     dt = datetime.fromisoformat(created.replace('+00:00', ''))
                     date_listed = dt.strftime('%Y-%m-%d')
                     days_on_market = (datetime.now() - dt).days
-                except:
-                    pass
+                except Exception as e:
+                    # If CreatedOnDate fails, try ActivatedOn as fallback
+                    activated = item.get('ActivatedOn', '')
+                    if activated:
+                        try:
+                            dt = datetime.fromisoformat(activated.replace('+00:00', ''))
+                            date_listed = dt.strftime('%Y-%m-%d')
+                            days_on_market = (datetime.now() - dt).days
+                        except:
+                            pass
 
             # Get coordinates
             location = item.get('Location', {}) or {}
@@ -134,7 +142,7 @@ def extract_listings_from_page(page, page_num):
                 'brochure_latitude': str(brochure_lat) if brochure_lat else '',
                 'brochure_longitude': str(brochure_lng) if brochure_lng else '',
                 'date_listed': date_listed,
-                'days_on_market': str(days_on_market) if days_on_market != '' else '',
+                'days_on_market': str(days_on_market) if isinstance(days_on_market, int) or (isinstance(days_on_market, str) and days_on_market != '') else '',
                 'agent': item.get('GroupName', ''),
                 'is_new': item.get('IsNew', False),
                 'is_sale_agreed': item.get('IsSaleAgreed', False),
