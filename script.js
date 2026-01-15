@@ -43,7 +43,7 @@ function showEmptyState(show) {
     if (show) {
         var row = document.createElement('tr');
         row.id = 'emptyState';
-        row.innerHTML = '<td colspan="10" style="text-align:center;padding:60px 20px;color:#7A7067;"><div style="font-size:15px;margin-bottom:8px;">No properties match your filters</div><div style="font-size:13px;">Try adjusting your search criteria</div></td>';
+        row.innerHTML = '<td colspan="11" style="text-align:center;padding:60px 20px;color:#7A7067;"><div style="font-size:15px;margin-bottom:8px;">No properties match your filters</div><div style="font-size:13px;">Try adjusting your search criteria</div></td>';
         tbody.appendChild(row);
     }
 }
@@ -907,6 +907,28 @@ function renderTable() {
         }
         tr.appendChild(td4);
 
+        // Date listed
+        const td4b = document.createElement('td');
+        if (d.date_listed) {
+            try {
+                const date = new Date(d.date_listed);
+                if (!isNaN(date.getTime())) {
+                    td4b.textContent = date.toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                    });
+                } else {
+                    td4b.textContent = d.date_listed;
+                }
+            } catch (e) {
+                td4b.textContent = d.date_listed || '-';
+            }
+        } else {
+            td4b.textContent = '-';
+        }
+        tr.appendChild(td4b);
+
         // Price per sqm
         const td5 = document.createElement('td');
         td5.textContent = d.pricePerSqm > 0 ? d.pricePerSqm.toLocaleString() : '-';
@@ -1278,9 +1300,29 @@ function exportToExcel() {
 
     // Prepare data for Excel export - export ALL listings in tableData, not just the 500 displayed
     const excelData = tableData.map(function(d) {
+        // Format date_listed for display
+        let dateListedFormatted = '';
+        if (d.date_listed) {
+            try {
+                const date = new Date(d.date_listed);
+                if (!isNaN(date.getTime())) {
+                    dateListedFormatted = date.toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                    });
+                } else {
+                    dateListedFormatted = d.date_listed;
+                }
+            } catch (e) {
+                dateListedFormatted = d.date_listed || '';
+            }
+        }
+        
         return {
             'Property Address': d.address || '',
             'Price': d.price || '',
+            'Date listed': dateListedFormatted,
             'Price per m²': d.pricePerSqm ? '€' + d.pricePerSqm.toLocaleString() : '',
             'Bedrooms': d.bedsNum || '',
             'Size (m²)': d.sizeNum || '',
@@ -1296,7 +1338,7 @@ function exportToExcel() {
 
     // Convert Property Link column to clickable hyperlinks
     const range = XLSX.utils.decode_range(ws['!ref']);
-    const linkColIndex = 7; // Property Link is the 8th column (0-indexed: 7)
+    const linkColIndex = 8; // Property Link is the 9th column (0-indexed: 8) after adding Date listed
     
     for (let row = 1; row <= range.e.r; row++) { // Start from row 1 (skip header)
         const cellAddress = XLSX.utils.encode_cell({ r: row, c: linkColIndex });
@@ -1314,6 +1356,7 @@ function exportToExcel() {
     const colWidths = [
         { wch: 40 }, // Property Address
         { wch: 15 }, // Price
+        { wch: 15 }, // Date listed
         { wch: 15 }, // Price per m²
         { wch: 10 }, // Bedrooms
         { wch: 12 }, // Size (m²)
