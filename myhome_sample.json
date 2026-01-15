@@ -1,0 +1,113 @@
+{
+   "PropertyId":4898414,
+   "GroupId":5946,
+   "CustomData":{
+      "RelatedPropertyIDs":[
+         
+      ],
+      "PromotionalSnippet":"",
+      "IsMyHomePassport":false,
+      "DevelopmentLogoBgColour":""
+   },
+   "RefreshedOn":"2026-01-05T14:37:50.7270000+00:00",
+   "Location":{
+      "lat":0,
+      "lon":0
+   },
+   "Address":"12/13 Castlewood Terrace",
+   "GroupPhoneNumber":"Young's Estate Agents",
+   "GroupEmail":"info@youngs.ie",
+   "GroupName":"Young's Estate Agents",
+   "GroupAddress":"Elmwood House, 35 Ranelagh, Dublin 6 ",
+   "GroupUrlSlugIdentifier":"youngs-estate-agents",
+   "Negotiator":{
+      "NegotiatorId":196884,
+      "Name":"Michael McDonagh",
+      "JobTitle":"Director",
+      "Phone":"01 4975581",
+      "Email":"mmcdonagh@youngs.ie",
+      "ImageUrl":"https://photos-a.propertyimages.ie/users/4/8/8/196884/profile.jpg",
+      "WebSite":"www.youngs.ie"
+   },
+   "CreatedOnDate":"2025-01-08T11:29:24.5500000+00:00",
+   "ActivatedOn":"2025-01-08T11:47:44.7330000+00:00",
+   "IsNew":false,
+   "IsSaleAgreed":false,
+   "GroupLogoBgColor":"#ce072d",
+   "GroupPremiumHeadTextColour":"#FFFFFF",
+   "GroupLogoUrl":"https://photos-a.propertyimages.ie/groups/6/4/9/5946/logo.jpg",
+   "GroupPremiumLogoUrl":"https://photos-a.propertyimages.ie/groups/6/4/9/5946/premiumlogo.jpg",
+   "GroupPremiumJointLogoUrl":"",
+   "GroupRectangularLogoUrl":"",
+   "JointGroupRectangularLogoUrl":"",
+   "JointGroupPremiumJointLogo":"",
+   "GroupUrl":"/estate-agents/youngs-estate-agents-5946",
+   "IsPremiumAd":false,
+   "IsBuildToRent":false,
+   "IsBuildToRentDevelopment":false,
+   "IsPrivateLandlord":false,
+   "IsBrandBooster":true,
+   "IsActive":true,
+   "SaleTypeId":17,
+   "IsFavourite":false,
+   "HasVideos":true,
+   "HasWebP":true,
+   "IsMappedAccurately":true,
+   "IsTopSpot":false,
+   "BedsString":"3 beds",
+   "NumberOfBeds":3,
+   "PriceAsString":"€625,000",
+   "BrochureMap":{
+      "longitude":-6.263101577758789,
+      "latitude":53.323516845703125
+   },
+   "id":4898414,
+   "SizeStringMeters":76,
+   "LatestPriceChangeString":"-€50,000 on 31st Mar 25",
+   "PriceChangeIsIncrease":false,
+   "DisplayAddress":"12/13 Castlewood Terrace, Rathmines, Dublin 6",
+   "PropertyClassId":1,
+   "PropertyClass":"ResidentialForSale",
+   "PropertyClassUrlSlug":"residential",
+   "PropertyStatus":"ForSale",
+   "PropertyType":"Terraced House",
+   "BathString":"2 baths",
+   "NumberOfBathrooms":2,
+   "BerRating":"E2",
+   "EnergyRatingMediaPath":"https://photos-a.propertyimages.ie/static/images/energyRating/E2.png",
+   "OpenViewings":[
+      
+   ],
+   "VirtualViewings":[
+      
+   ],
+   "OrderedDisplayAddress":"1213 castlewood terrace rathmines dublin 6",
+   "SeoDisplayAddress":"1213-castlewood-terrace-rathmines-dublin-6",
+   "BrochureUrl":"/residential/brochure/12-13-castlewood-terrace-rathmines-dublin-6/4898414",
+   "SeoUrl":"/residential/brochure/12-13-castlewood-terrace-rathmines-dublin-6/4898414",
+   "PhotoCount":10,
+   "MainPhoto":"https://photos-a.propertyimages.ie/media/4/1/4/4898414/3ec0a6a5-a8d6-4460-87bb-8d431496fabf_l.jpg",
+   "MainPhotoWeb":"https://photos-a.propertyimages.ie/media/4/1/4/4898414/3ec0a6a5-a8d6-4460-87bb-8d431496fabf_m.jpg",
+   "Photos":[
+      "https://photos-a.propertyimages.ie/media/4/1/4/4898414/3ec0a6a5-a8d6-4460-87bb-8d431496fabf_l.jpg",
+      "https://photos-a.propertyimages.ie/media/4/1/4/4898414/25ce5b7b-b736-4b94-ab55-f01903d69f10_l.jpg",
+      "https://photos-a.propertyimages.ie/media/4/1/4/4898414/11b04c41-86fd-45b0-b1e5-4a581683e170_l.jpg",
+      "https://photos-a.propertyimages.ie/media/4/1/4/4898414/fc641380-375c-47dd-8473-97e85eafa152_l.jpg",
+      "https://photos-a.propertyimages.ie/media/4/1/4/4898414/21bb9e4d-0490-4107-8a49-c147a41eceb6_l.jpg",
+      "https://photos-a.propertyimages.ie/media/4/1/4/4898414/99b5cdec-42d8-48f1-9b71-5b3f6d7ce7c5_l.jpg",
+      "https://photos-a.propertyimages.ie/media/4/1/4/4898414/29634386-49d7-424f-bc06-98beda4d7394_l.jpg",
+      "https://photos-a.propertyimages.ie/media/4/1/4/4898414/9ca1c1dc-cd62-406d-9daf-3c3f8fc72812_l.jpg",
+      "https://photos-a.propertyimages.ie/media/4/1/4/4898414/9470b935-81b1-4b57-a311-498f4fe694b5_l.jpg",
+      "https://photos-a.propertyimages.ie/media/4/1/4/4898414/a452bbef-5814-4e43-873a-55c22af34c29_l.jpg"
+   ],
+   "TravelTimes":[
+      
+   ],
+   "AuctionList":[
+      
+   ],
+   "AdditionalLogoUrls":[
+      
+   ],
+   "RelatedPropertiesTotal":0
+}
