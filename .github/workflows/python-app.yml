@@ -3,9 +3,10 @@
 name: run Python scrapers
 
 on:
-  workflow_dispatch:  # Allows manual trigger from GitHub Actions UI
-#  schedule:
-#    - cron: '0 10 * * 1' # run every Monday at 10:00 AM
+  workflow_dispatch:  # Manual trigger from GitHub Actions UI
+  schedule:
+    # Run every Monday at 03:00 UTC
+    - cron: '0 3 * * 1'
 #  push:
 #    branches: [ "main" ]
 #  pull_request:
@@ -16,41 +17,43 @@ permissions:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.10"
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install playwright
-        playwright install chromium
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Run the daft.ie scraper
-      run: |
-        python scrapers/daft_scraper.py
-    - name: Run the myhome.ie scraper
-      run: |
-        python scrapers/myhome_scraper.py
-    - name: Configure git
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-    - name: Commit and push changes
-      run: |
-        git add data/daft_listings.csv data/daft_listings.json data/daft_scrape_timestamp.txt
-        git add data/myhome_listings.csv data/myhome_listings.json data/myhome_scrape_timestamp.txt
-        if git diff --staged --quiet; then
-          echo "No changes to commit"
-        else
-          git commit -m "Update data from scraper run [$(date +'%Y-%m-%d %H:%M:%S')]"
-          git push
-        fi
-        
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright
+          playwright install chromium
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run the daft.ie scraper
+        run: python scrapers/daft_scraper.py
+
+      - name: Run the myhome.ie scraper
+        run: python scrapers/myhome_scraper.py
+
+      - name: Configure git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Commit and push changes
+        run: |
+          git add data/daft_listings.csv data/daft_listings.json data/daft_scrape_timestamp.txt
+          git add data/myhome_listings.csv data/myhome_listings.json data/myhome_scrape_timestamp.txt
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update data from scraper run [$(date +'%Y-%m-%d %H:%M:%S')]"
+            git push
+          fi
